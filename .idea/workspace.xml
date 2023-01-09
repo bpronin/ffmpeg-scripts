@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2JuHKLGPqSW68rBQooo0dYwvvRH" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="RunOnceActivity.cidr.known.project.marker" value="true" />
+    <property name="android.sdk.path" value="$PROJECT_DIR$/../../../Tools/android" />
+    <property name="cidr.known.project.marker" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Opt\ffmpeg\scripts" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Opt\ffmpeg\scripts" />
+    </key>
+  </component>
+  <component name="RunManager" selected="PowerShell.durations-to-tracks.ps1">
+    <configuration name="durations-to-tracks.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/durations-to-tracks.ps1" scriptParameters="c:\Temp\~Pending\durations.txt" workingDirectory="C:\Users\boris" executablePath="$PROJECT_DIR$/../../../Windows/System32/WindowsPowerShell/v1.0/powershell.exe">
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="set-win-context-menu.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/set-win-context-menu.ps1" workingDirectory="C:\Users\boris" executablePath="$PROJECT_DIR$/../../../Windows/System32/WindowsPowerShell/v1.0/powershell.exe">
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="split.ps1 (mp4)" type="PowerShellRunType" factoryName="PowerShell" scriptUrl="$PROJECT_DIR$/split.ps1" scriptParameters="-source c:\Temp\~Pending\source.mp4" workingDirectory="C:\Users\boris" executablePath="C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe">
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="split.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/split.ps1" scriptParameters="c:\Temp\~Pending\source.m4a" workingDirectory="C:\Users\boris" executablePath="C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe">
+      <envs />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="PowerShell.split.ps1 (mp4)" />
+      <item itemvalue="PowerShell.set-win-context-menu.ps1" />
+      <item itemvalue="PowerShell.split.ps1" />
+      <item itemvalue="PowerShell.durations-to-tracks.ps1" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="PowerShell.durations-to-tracks.ps1" />
+        <item itemvalue="PowerShell.split.ps1" />
+        <item itemvalue="PowerShell.set-win-context-menu.ps1" />
+        <item itemvalue="PowerShell.set-win-context-menu.ps1" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="" />
+      <created>1672920982396</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1672920982396</updated>
+    </task>
+    <servers />
+  </component>
+</project>
