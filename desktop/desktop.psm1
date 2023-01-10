@@ -1,14 +1,16 @@
-function Move-To-Trash {
+function Move-To-Trash
+{
     param (
         [string]$path
     )
     $shell = New-Object -ComObject 'Shell.Application'
-    ForEach ($path in $paths) {
+    ForEach ($path in $paths)
+    {
         $shell.NameSpace(0).ParseName($path.FullName).InvokeVerb('delete')
     }
 }
 
-function Set-Context-Menu
+function SetContextMenu
 {
     param (
         [parameter(Mandatory = $True)]
@@ -51,7 +53,7 @@ function Set-Context-Menu
     }
 }
 
-function Set-Context-Menu-Ext
+function SetContextMenuExt
 {
     param (
         [parameter(Mandatory = $True)]
@@ -69,9 +71,9 @@ function Set-Context-Menu-Ext
     )
     process{
         $app = Get-ItemPropertyValue -Path "Registry::HKEY_CLASSES_ROOT\.$ext" -Name "(default)"
-        Set-Context-Menu -app $app -menu $menu -item $item -icon $icon -position $position -command $command
+        SetContextMenu -app $app -menu $menu -item $item -icon $icon -position $position -command $command
     }
 }
 
-
-
+Export-ModuleMember -Function SetContextMenu
+Export-ModuleMember -Function SetContextMenuExt

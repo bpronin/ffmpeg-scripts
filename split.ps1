@@ -1,11 +1,12 @@
 ﻿param (
     [Parameter(Mandatory = $true)]
     [string]$i,
-    [string]$format = "m4a",
-    [string]$ffmpeg = "c:\Opt\ffmpeg\bin\ffmpeg.exe"
+    [string]$format = "m4a"
 )
 
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("windows-1251")
+
+Import-Module -Name $PSScriptRoot\ffmpeg
 
 function Read-Time
 {
@@ -47,64 +48,22 @@ function Format-Time
     }
 }
 
-function Invoke-Ffmpeg
-{
-    param (
-        [System.IO.FileInfo]$source,
-        [string]$options
-    )
-    Invoke-Expression "$ffmpeg -loglevel error -y -i `"$source`" $options"
-}
-
-function Copy-Audio
-{
-    param (
-        [System.IO.FileInfo]$source,
-        [string]$destination,
-        [string]$title,
-        [string]$options
-    )
-    Invoke-Ffmpeg -source $source -options "$options -vn -metadata title=`"$title`" -c:a copy `"$destination`""
-}
-
-function Save-Image
-{
-    param (
-        [System.IO.FileInfo]$source
-    )
-    $destination = [System.IO.Path]::ChangeExtension($source, ".jpg")
-    "Extracting cover image: $destination"
-
-    Invoke-Ffmpeg -source $source -options "-filter:v `"select=eq(n\,1000)`" -frames:v 1 `"$destination`""
-}
-
-function Save-Audio
-{
-    param (
-        [System.IO.FileInfo]$source
-    )
-    $destination = [System.IO.Path]::ChangeExtension($source, ".$format")
-    "Extracting audio: $destination"
-
-    Copy-Audio -source $source -destination $destination -title $source.BaseName
-}
-
 function Split-Audio-By-Tracks
 {
     param (
         [System.IO.FileInfo]$source,
         [System.IO.FileInfo]$tracklist
     )
-    $path = $source.Directory
 
+    $path = $source.Directory
     $lines = @(Get-Content -Path $tracklist -Encoding UTF8)
+    $tasks = @($null) * $lines.Length
 
     for ($index = 0; $index -lt $lines.count; $index++) {
         $next = $index + 1
         $title, $start = Read-Line $lines[$index]
 
         $destination = "{0}\{1:d2} - {2}.{3}" -f $path, $next, $title, $format
-        "Extracting audio: " + $destination
 
         if ($next -lt $lines.count)
         {
@@ -115,10 +74,25 @@ function Split-Audio-By-Tracks
             $end = $null
         }
 
-        $ss = Format-Time "-ss " $start
-        $to = Format-Time "-to " $end
-        Copy-Audio -source $source -title $title -destination $destination -options "$ss $to -vn -metadata track=`"$next`""
+        $tasks[$index] = @{
+            source = $source
+            index = $next
+            title = $title
+            ss = Format-Time "-ss " $start
+            to = Format-Time "-to " $end
+            destination = $destination
+        }
     }
+
+    $tasks | ForEach-Object -Parallel {
+        Import-Module -Name $using:PSScriptRoot\ffmpeg
+
+        "Extracting audio: $( $_.destination ) ..."
+        Copy-Audio -source $( $_.source ) `
+                   -destination $( $_.destination ) `
+                   -title $( $_.title ) `
+                   -options "$( $_.ss ) $( $_.to ) -vn -metadata track=`"$( $_.index )`""
+    } -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
 }
 
 function Split-File

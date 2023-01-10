@@ -4,11 +4,20 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="" />
+    <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="update">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="PowerShell File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -35,10 +44,12 @@
       <recent name="C:\Opt\ffmpeg\scripts" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Opt\ffmpeg\scripts\desktop" />
+      <recent name="C:\Opt\ffmpeg\scripts\ffmpeg" />
       <recent name="C:\Opt\ffmpeg\scripts" />
     </key>
   </component>
-  <component name="RunManager" selected="PowerShell.durations-to-tracks.ps1">
+  <component name="RunManager" selected="PowerShell.set-win-context-menu.ps1">
     <configuration name="durations-to-tracks.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/durations-to-tracks.ps1" scriptParameters="c:\Temp\~Pending\durations.txt" workingDirectory="C:\Users\boris" executablePath="$PROJECT_DIR$/../../../Windows/System32/WindowsPowerShell/v1.0/powershell.exe">
       <envs />
       <method v="2" />
@@ -47,11 +58,15 @@
       <envs />
       <method v="2" />
     </configuration>
-    <configuration name="split.ps1 (mp4)" type="PowerShellRunType" factoryName="PowerShell" scriptUrl="$PROJECT_DIR$/split.ps1" scriptParameters="-source c:\Temp\~Pending\source.mp4" workingDirectory="C:\Users\boris" executablePath="C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe">
+    <configuration name="split.ps1 (mp4)" type="PowerShellRunType" factoryName="PowerShell" scriptUrl="$PROJECT_DIR$/split.ps1" scriptParameters="c:\Temp\~Pending\source.mp4" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
       <envs />
       <method v="2" />
     </configuration>
     <configuration name="split.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/split.ps1" scriptParameters="c:\Temp\~Pending\source.m4a" workingDirectory="C:\Users\boris" executablePath="C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe">
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="threads.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/threads.ps1" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
       <envs />
       <method v="2" />
     </configuration>
@@ -60,13 +75,15 @@
       <item itemvalue="PowerShell.set-win-context-menu.ps1" />
       <item itemvalue="PowerShell.split.ps1" />
       <item itemvalue="PowerShell.durations-to-tracks.ps1" />
+      <item itemvalue="PowerShell.threads.ps1" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="PowerShell.durations-to-tracks.ps1" />
+        <item itemvalue="PowerShell.set-win-context-menu.ps1" />
         <item itemvalue="PowerShell.split.ps1" />
-        <item itemvalue="PowerShell.set-win-context-menu.ps1" />
-        <item itemvalue="PowerShell.set-win-context-menu.ps1" />
+        <item itemvalue="PowerShell.durations-to-tracks.ps1" />
+        <item itemvalue="PowerShell.threads.ps1" />
+        <item itemvalue="PowerShell.threads.ps1" />
       </list>
     </recent_temporary>
   </component>
@@ -79,6 +96,14 @@
       <option name="presentableId" value="Default" />
       <updated>1672920982396</updated>
     </task>
+    <task id="LOCAL-00001" summary="update">
+      <created>1673268763167</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1673268763167</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -91,5 +116,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="update" />
+    <option name="LAST_COMMIT_MESSAGE" value="update" />
   </component>
 </project>
