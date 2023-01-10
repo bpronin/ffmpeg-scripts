@@ -9,8 +9,8 @@ $icon = "$PSScriptRoot\music.ico"
 
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("windows-1251")
 
-SetContextMenu -app "Folder" -menu $menu -item $item -icon $icon -command $command
+Set-ContextMenu -app "Folder" -menu $menu -item $item -icon $icon -command $command
 foreach ($ext in @("mp4", "mkv"))
 {
-    SetContextMenuExt -ext $ext -menu $menu -item $item -icon $icon -command $command
+    Set-ContextMenuExt -ext $ext -menu $menu -item $item -icon $icon -command $command
 }

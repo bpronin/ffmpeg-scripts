@@ -1,4 +1,4 @@
-function Move-To-Trash
+function Move-ToTrash
 {
     param (
         [string]$path
@@ -10,7 +10,7 @@ function Move-To-Trash
     }
 }
 
-function SetContextMenu
+function Set-ContextMenu
 {
     param (
         [parameter(Mandatory = $True)]
@@ -53,7 +53,7 @@ function SetContextMenu
     }
 }
 
-function SetContextMenuExt
+function Set-ContextMenuExt
 {
     param (
         [parameter(Mandatory = $True)]
@@ -71,9 +71,9 @@ function SetContextMenuExt
     )
     process{
         $app = Get-ItemPropertyValue -Path "Registry::HKEY_CLASSES_ROOT\.$ext" -Name "(default)"
-        SetContextMenu -app $app -menu $menu -item $item -icon $icon -position $position -command $command
+        Set-ContextMenu -app $app -menu $menu -item $item -icon $icon -position $position -command $command
     }
 }
 
-Export-ModuleMember -Function SetContextMenu
-Export-ModuleMember -Function SetContextMenuExt
+Export-ModuleMember -Function Set-ContextMenu
+Export-ModuleMember -Function Set-ContextMenuExt

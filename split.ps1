@@ -48,12 +48,35 @@ function Format-Time
     }
 }
 
-function Split-Audio-By-Tracks
+function Save-Image
+{
+    param (
+        [System.IO.FileInfo]$source
+    )
+    $destination = [System.IO.Path]::ChangeExtension($source, ".jpg")
+    "Extracting cover image: $destination ..."
+
+    Copy-Image -source $source -destination $destination
+}
+
+function Save-Audio
+{
+    param (
+        [System.IO.FileInfo]$source
+    )
+    $destination = [System.IO.Path]::ChangeExtension($source, ".$format")
+    "Extracting audio: $destination ..."
+
+    Copy-Audio -source $source -destination $destination -title $source.BaseName
+}
+
+function Split-AudioTracks
 {
     param (
         [System.IO.FileInfo]$source,
         [System.IO.FileInfo]$tracklist
     )
+    "Track list: " + $tracklist
 
     $path = $source.Directory
     $lines = @(Get-Content -Path $tracklist -Encoding UTF8)
@@ -64,6 +87,7 @@ function Split-Audio-By-Tracks
         $title, $start = Read-Line $lines[$index]
 
         $destination = "{0}\{1:d2} - {2}.{3}" -f $path, $next, $title, $format
+        "Extracting track: $destination ..."
 
         if ($next -lt $lines.count)
         {
@@ -87,7 +111,6 @@ function Split-Audio-By-Tracks
     $tasks | ForEach-Object -Parallel {
         Import-Module -Name $using:PSScriptRoot\ffmpeg
 
-        "Extracting audio: $( $_.destination ) ..."
         Copy-Audio -source $( $_.source ) `
                    -destination $( $_.destination ) `
                    -title $( $_.title ) `
@@ -106,8 +129,7 @@ function Split-File
     $tracklist = Get-ChildItem -Path "$( $source.Directory )\tracks.txt" -File -ErrorAction Ignore
     if ($tracklist)
     {
-        "Track list: " + $tracklist
-        Split-Audio-By-Tracks -source $source -tracklist $tracklist
+        Split-AudioTracks -source $source -tracklist $tracklist
     }
     else
     {
