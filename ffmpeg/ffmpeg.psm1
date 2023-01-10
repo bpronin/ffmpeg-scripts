@@ -1,10 +1,9 @@
-$ffmpeg = "c:\Opt\ffmpeg\bin\ffmpeg.exe"
-
 function Invoke-Ffmpeg
 {
     param (
         [System.IO.FileInfo]$source,
-        [string]$options
+        [string]$options,
+        $ffmpeg = "c:\Opt\ffmpeg\bin\ffmpeg.exe"
     )
     Invoke-Expression "$ffmpeg -loglevel error -y -i `"$source`" $options"
 }

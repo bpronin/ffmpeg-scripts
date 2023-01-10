@@ -118,27 +118,19 @@ function Split-AudioTracks
     } -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
 }
 
-function Split-File
+$source = Get-Item -Path $i
+"Source: " + $source
+
+$tracklist = Get-ChildItem -Path "$( $source.Directory )\tracks.txt" -File -ErrorAction Ignore
+if ($tracklist)
 {
-    param (
-        [string]$source_path
-    )
-    $source = Get-Item -Path $source_path
-    "Source: " + $source
-
-    $tracklist = Get-ChildItem -Path "$( $source.Directory )\tracks.txt" -File -ErrorAction Ignore
-    if ($tracklist)
-    {
-        Split-AudioTracks -source $source -tracklist $tracklist
-    }
-    else
-    {
-        Save-Audio -source $source
-    }
-
-    Save-Image -source $source
+    Split-AudioTracks -source $source -tracklist $tracklist
+}
+else
+{
+    Save-Audio -source $source
 }
 
-Split-File -source $i
+Save-Image -source $source
 
 "Done"
