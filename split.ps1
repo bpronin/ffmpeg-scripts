@@ -12,16 +12,16 @@ function IfElse
 {
     param (
         $condition,
-        $first,
-        $second = $null
+        $yes,
+        $no = $null
     )
     if ($condition)
     {
-        return $first
+        return $yes
     }
     else
     {
-        return $second
+        return $no
     }
 }
 
@@ -30,7 +30,7 @@ function SafeTrim
     param (
         [String]$string
     )
-    return IfElse -condition $string -first $string.Trim()
+    return IfElse -condition $string -yes $string.Trim()
 }
 
 function Read-Time
@@ -175,14 +175,14 @@ function Split-Audio
         $next_track = $tracks[$index + 1]
         $track_file = Normalize-Filename($track.title)
         $target = ("{0}\{1:d2} - {2}.{3}" -f $( $source.Directory ), $track.index, $track_file, $f)
-        "Extracting track: $target ..."
+        Write-Host "Extracting track: $target ..."
 
         $tasks.Add(@{
             source = $source
             target = $target
             title = $track.title
             ss = "-ss $( $track.time )"
-            to = IfElse($next_track, "-to $( $next_track.time )", "")
+            to = IfElse -condition $next_track -yes "-to $( $next_track.time )" -no ""
             metadata = Format-Metadata -track $track -tracks_count $tracks.count
         })> $null
     }
@@ -216,5 +216,7 @@ else
 }
 
 Save-Image -source $source
+
+#Read-Host "Press enter to continue"
 
 "Done"
