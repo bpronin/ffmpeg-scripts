@@ -8,6 +8,31 @@
 
 Import-Module -Name $PSScriptRoot\ffmpeg
 
+function IfElse
+{
+    param (
+        $condition,
+        $first,
+        $second = $null
+    )
+    if ($condition)
+    {
+        return $first
+    }
+    else
+    {
+        return $second
+    }
+}
+
+function SafeTrim
+{
+    param (
+        [String]$string
+    )
+    return IfElse -condition $string -first $string.Trim()
+}
+
 function Read-Time
 {
     param (
@@ -30,9 +55,12 @@ function Read-Track
     if ($source -match $format)
     {
         return @{
-            title = $Matches["title"].Trim()
-            artist = $Matches["artist"].Trim()
+            title = SafeTrim($Matches["title"])
             time = Read-Time $Matches["time"]
+            artist = SafeTrim($Matches["artist"])
+            date = SafeTrim($Matches["date"])
+            performer = SafeTrim($Matches["performer"])
+            composer = SafeTrim($Matches["composer"])
         }
     }
     else
@@ -146,7 +174,7 @@ function Split-Audio
         $track = $tracks[$index]
         $next_track = $tracks[$index + 1]
         $track_file = Normalize-Filename($track.title)
-        $target = ("{0}\{1:d2} - {2}.{3}" -f $($source.Directory), $track.index, $track_file, $f)
+        $target = ("{0}\{1:d2} - {2}.{3}" -f $( $source.Directory ), $track.index, $track_file, $f)
         "Extracting track: $target ..."
 
         $tasks.Add(@{
@@ -154,7 +182,7 @@ function Split-Audio
             target = $target
             title = $track.title
             ss = "-ss $( $track.time )"
-            to = $next_track ? "-to $( $next_track.time )" : ""
+            to = IfElse($next_track, "-to $( $next_track.time )", "")
             metadata = Format-Metadata -track $track -tracks_count $tracks.count
         })> $null
     }
@@ -172,7 +200,8 @@ $source = Get-Item -Path $i
 "Source: " + $source
 
 $tracklist_path = [System.IO.Path]::ChangeExtension($source, ".tracks")
-if (-not [System.IO.Path]::Exists($tracklist_path)){
+if (-not [System.IO.Path]::Exists($tracklist_path))
+{
     $tracklist_path = [System.IO.Path]::Combine($source.Directory, "tracks.txt")
 }
 $tracklist = Get-ChildItem -Path $tracklist_path -File -ErrorAction Ignore
