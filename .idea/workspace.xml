@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="multithreading" />
+    <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="multithreading">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/split.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/split.ps1" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -56,7 +59,7 @@
       <envs />
       <method v="2" />
     </configuration>
-    <configuration name="split.ps1 (mp4)" type="PowerShellRunType" factoryName="PowerShell" scriptUrl="$PROJECT_DIR$/split.ps1" scriptParameters="c:\Temp\~Pending\source.mp4" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
+    <configuration name="split.ps1 (mp4)" type="PowerShellRunType" factoryName="PowerShell" scriptUrl="$PROJECT_DIR$/split.ps1" scriptParameters="c:\Temp\~Pending\test\audio.mp4" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
       <envs />
       <method v="2" />
     </configuration>
@@ -115,7 +118,14 @@
       <option name="project" value="LOCAL" />
       <updated>1673347226198</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="multithreading">
+      <created>1673526905502</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1673526905502</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

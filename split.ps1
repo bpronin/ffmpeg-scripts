@@ -1,7 +1,7 @@
 ﻿param (
     [Parameter(Mandatory = $true)]
-    [string]$i,
-    [string]$f = "m4a"
+    [String]$i,
+    [String]$f = "m4a"
 )
 
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("windows-1251")
@@ -11,14 +11,14 @@ Import-Module -Name $PSScriptRoot\ffmpeg
 function Read-Time
 {
     param (
-        [string]$string
+        [String]$string
     )
     $time_string = $string.Trim()
     if ($time_string.split(":").count -eq 2)
     {
         $time_string = "00:" + $time_string
     }
-    return [timespan]$time_string
+    return [TimeSpan]$time_string
 }
 
 function Read-Track
@@ -42,6 +42,7 @@ function Read-Track
 }
 
 function Read-LineFormat
+
 {
     param (
         [String] $line
@@ -55,29 +56,6 @@ function Read-LineFormat
         return "(?<title>.+);(?<time>.+)", 0
     }
 }
-
-function Save-Image
-{
-    param (
-        [System.IO.FileInfo]$source
-    )
-    $target = [System.IO.Path]::ChangeExtension($source, ".jpg")
-    "Extracting cover image: $target ..."
-
-    Copy-Image -source $source -target $target
-}
-
-function Save-Audio
-{
-    param (
-        [System.IO.FileInfo]$source
-    )
-    $target = [System.IO.Path]::ChangeExtension($source, ".$f")
-    "Extracting audio: $target ..."
-
-    Copy-Audio -source $source -target $target -title $source.BaseName
-}
-
 function Read-Tracks
 {
     param (
@@ -99,6 +77,18 @@ function Read-Tracks
     return $tracks
 }
 
+function Save-Image
+{
+    param (
+        [System.IO.FileInfo]$source
+    )
+    $name = [System.IO.Path]::GetFileNameWithoutExtension($source)
+    $target = [System.IO.Path]::Combine($source.DirectoryName, "$name-cover.jpg")
+    "Extracting cover image: $target ..."
+
+    Copy-Image -source $source -target $target
+}
+
 function Format-Metadata
 {
     param (
@@ -118,7 +108,31 @@ function Format-Metadata
     {
         $data += " -metadata artist=`"$( $track.performer )`""
     }
+    if ($track.date)
+    {
+        $data += " -metadata date=`"$( $track.date )`""
+    }
     return $data
+}
+
+function Normalize-Filename
+{
+    param (
+        [String]$string
+    )
+
+    return ((($string -replace "[\\/:|<>]", "¦") -replace "[*]", "·") -replace "[?]", "$") -replace "[\`"]", "'"
+}
+
+function Save-Audio
+{
+    param (
+        [System.IO.FileInfo]$source
+    )
+    $target = [System.IO.Path]::ChangeExtension($source, ".$f")
+    "Extracting audio: $target ..."
+
+    Copy-Audio -source $source -target $target -title $source.BaseName
 }
 
 function Split-Audio
@@ -127,12 +141,12 @@ function Split-Audio
         [System.IO.FileInfo]$source,
         [Object[]]$tracks
     )
-    $path = $source.Directory
     $tasks = [System.Collections.Arraylist]@()
     for ($index = 0; $index -lt $tracks.count; $index++) {
         $track = $tracks[$index]
         $next_track = $tracks[$index + 1]
-        $target = ("{0}\{1:d2} - {2}.{3}" -f $path, $track.index, $track.title, $f)
+        $track_file = Normalize-Filename($track.title)
+        $target = ("{0}\{1:d2} - {2}.{3}" -f $($source.Directory), $track.index, $track_file, $f)
         "Extracting track: $target ..."
 
         $tasks.Add(@{
@@ -157,7 +171,11 @@ function Split-Audio
 $source = Get-Item -Path $i
 "Source: " + $source
 
-$tracklist = Get-ChildItem -Path "$( $source.Directory )\tracks.txt" -File -ErrorAction Ignore
+$tracklist_path = [System.IO.Path]::ChangeExtension($source, ".tracks")
+if (-not [System.IO.Path]::Exists($tracklist_path)){
+    $tracklist_path = [System.IO.Path]::Combine($source.Directory, "tracks.txt")
+}
+$tracklist = Get-ChildItem -Path $tracklist_path -File -ErrorAction Ignore
 if ($tracklist)
 {
     "Track list: $tracklist"
