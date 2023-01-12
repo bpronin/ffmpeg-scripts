@@ -1,7 +1,7 @@
 ﻿param (
     [Parameter(Mandatory = $true)]
     [string]$i,
-    [string]$format = "m4a"
+    [string]$f = "m4a"
 )
 
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("windows-1251")
@@ -14,37 +14,45 @@ function Read-Time
         [string]$string
     )
     $time_string = $string.Trim()
-    if ($time_string.split("\:").count -eq 2)
+    if ($time_string.split(":").count -eq 2)
     {
         $time_string = "00:" + $time_string
     }
     return [timespan]$time_string
 }
 
-function Read-Line
+function Read-Track
 {
     param (
-        [string] $line
+        [String] $source,
+        [String] $format
     )
-    $data = $line.split(";")
-    $title = $data[0].Trim()
-    $time = Read-Time $data[1]
-    return $title, $time
-}
-
-function Format-Time
-{
-    param (
-        [string]$prefix,
-        $time
-    )
-    if ($null -ne $time)
+    if ($source -match $format)
     {
-        return "{0}{1:hh\:mm\:ss}" -f $prefix, $time
+        return @{
+            title = $Matches["title"].Trim()
+            artist = $Matches["artist"].Trim()
+            time = Read-Time $Matches["time"]
+        }
     }
     else
     {
-        return ""
+        return $null
+    }
+}
+
+function Read-LineFormat
+{
+    param (
+        [String] $line
+    )
+    if ($line -match "^\[(.+)\]")
+    {
+        return $Matches[1], 1
+    }
+    else
+    {
+        return "(?<title>.+);(?<time>.+)", 0
     }
 }
 
@@ -53,10 +61,10 @@ function Save-Image
     param (
         [System.IO.FileInfo]$source
     )
-    $destination = [System.IO.Path]::ChangeExtension($source, ".jpg")
-    "Extracting cover image: $destination ..."
+    $target = [System.IO.Path]::ChangeExtension($source, ".jpg")
+    "Extracting cover image: $target ..."
 
-    Copy-Image -source $source -destination $destination
+    Copy-Image -source $source -target $target
 }
 
 function Save-Audio
@@ -64,59 +72,87 @@ function Save-Audio
     param (
         [System.IO.FileInfo]$source
     )
-    $destination = [System.IO.Path]::ChangeExtension($source, ".$format")
-    "Extracting audio: $destination ..."
+    $target = [System.IO.Path]::ChangeExtension($source, ".$f")
+    "Extracting audio: $target ..."
 
-    Copy-Audio -source $source -destination $destination -title $source.BaseName
+    Copy-Audio -source $source -target $target -title $source.BaseName
 }
 
-function Split-AudioTracks
+function Read-Tracks
+{
+    param (
+        [System.IO.FileInfo]$source
+    )
+
+    $lines = @(Get-Content -Path $source -Encoding UTF8)
+    $line_format, $start_index = Read-LineFormat $lines[0]
+    $tracks = [System.Collections.Arraylist]@()
+
+    for ($index = $start_index; $index -lt $lines.count; $index++) {
+        $track = Read-Track -source $lines[$index] -format $line_format
+        if ($track)
+        {
+            $track.index = $tracks.Add($track) + 1
+        }
+    }
+
+    return $tracks
+}
+
+function Format-Metadata
+{
+    param (
+        [Object]$track,
+        [int]$tracks_count
+    )
+    $data = "-metadata track=`"$( $track.index )`" -metadata totaltracks=`"$tracks_count`""
+    if ($track.artist)
+    {
+        $data += " -metadata artist=`"$( $track.artist )`""
+    }
+    if ($track.composer)
+    {
+        $data += " -metadata artist=`"$( $track.composer )`""
+    }
+    if ($track.performer)
+    {
+        $data += " -metadata artist=`"$( $track.performer )`""
+    }
+    return $data
+}
+
+function Split-Audio
 {
     param (
         [System.IO.FileInfo]$source,
-        [System.IO.FileInfo]$tracklist
+        [Object[]]$tracks
     )
-    "Track list: " + $tracklist
-
     $path = $source.Directory
-    $lines = @(Get-Content -Path $tracklist -Encoding UTF8)
-    $tasks = @($null) * $lines.Length
+    $tasks = [System.Collections.Arraylist]@()
+    for ($index = 0; $index -lt $tracks.count; $index++) {
+        $track = $tracks[$index]
+        $next_track = $tracks[$index + 1]
+        $target = ("{0}\{1:d2} - {2}.{3}" -f $path, $track.index, $track.title, $f)
+        "Extracting track: $target ..."
 
-    for ($index = 0; $index -lt $lines.count; $index++) {
-        $next = $index + 1
-        $title, $start = Read-Line $lines[$index]
-
-        $destination = "{0}\{1:d2} - {2}.{3}" -f $path, $next, $title, $format
-        "Extracting track: $destination ..."
-
-        if ($next -lt $lines.count)
-        {
-            $_, $end = Read-Line $lines[$next]
-        }
-        else
-        {
-            $end = $null
-        }
-
-        $tasks[$index] = @{
+        $tasks.Add(@{
             source = $source
-            index = $next
-            title = $title
-            ss = Format-Time "-ss " $start
-            to = Format-Time "-to " $end
-            destination = $destination
-        }
+            target = $target
+            title = $track.title
+            ss = "-ss $( $track.time )"
+            to = $next_track ? "-to $( $next_track.time )" : ""
+            metadata = Format-Metadata -track $track -tracks_count $tracks.count
+        })> $null
     }
 
     $tasks | ForEach-Object -Parallel {
         Import-Module -Name $using:PSScriptRoot\ffmpeg
-
-        Copy-Audio -source $( $_.source ) `
-                   -destination $( $_.destination ) `
-                   -title $( $_.title ) `
-                   -options "$( $_.ss ) $( $_.to ) -vn -metadata track=`"$( $_.index )`""
+        Copy-Audio -source $( $_.source ) -target $( $_.target ) `
+                           -title $( $_.title ) -options "$( $_.ss ) $( $_.to ) $( $_.metadata )"
     } -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
 }
+
+# --- SCRIPT ENTRY POINT
 
 $source = Get-Item -Path $i
 "Source: " + $source
@@ -124,7 +160,8 @@ $source = Get-Item -Path $i
 $tracklist = Get-ChildItem -Path "$( $source.Directory )\tracks.txt" -File -ErrorAction Ignore
 if ($tracklist)
 {
-    Split-AudioTracks -source $source -tracklist $tracklist
+    "Track list: $tracklist"
+    Split-Audio -source $source -tracks (Read-Tracks -source $tracklist)
 }
 else
 {

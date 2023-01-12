@@ -1,32 +1,47 @@
+using namespace System.IO
+
 function Invoke-Ffmpeg
 {
     param (
-        [System.IO.FileInfo]$source,
-        [string]$options,
+        [FileInfo]$source,
+        [String]$target,
+        [String]$options,
         $ffmpeg = "c:\Opt\ffmpeg\bin\ffmpeg.exe"
     )
-    Invoke-Expression "$ffmpeg -loglevel error -y -i `"$source`" $options"
+    Invoke-Expression "$ffmpeg -loglevel error -y -i `"$source`" $options `"$target`""
+#    "$ffmpeg -loglevel error -y -i `"$source`" $options `"$target`""
+}
+
+function Convert-Mp3
+{
+    param (
+        [FileInfo]$source,
+        [String]$target,
+        [String]$title
+    )
+    Invoke-Ffmpeg -source $source -target $target -options "-metadata title=`"$title`" -acodec mp3 -aq 4"
 }
 
 function Copy-Audio
 {
     param (
-        [System.IO.FileInfo]$source,
-        [String]$destination,
+        [FileInfo]$source,
+        [String]$target,
         [String]$title,
         [String]$options
     )
-    Invoke-Ffmpeg -source $source -options "$options -vn -metadata title=`"$title`" -c:a copy `"$destination`""
+    Invoke-Ffmpeg -source $source -target $target -options "$options -metadata title=`"$title`" -vn -c:a copy"
 }
 
 function Copy-Image
 {
     param (
-        [System.IO.FileInfo]$source,
-        [System.IO.FileInfo]$destination
+        [FileInfo]$source,
+        [FileInfo]$target
     )
-    Invoke-Ffmpeg -source $source -options "-filter:v `"select=eq(n\,1000)`" -frames:v 1 `"$destination`""
+    Invoke-Ffmpeg -source $source -target $target -options "-filter:v `"select=eq(n\,1000)`" -frames:v 1"
 }
 
 Export-ModuleMember -Function Copy-Audio
 Export-ModuleMember -Function Copy-Image
+Export-ModuleMember -Function Convert-Mp3

@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="multithreading">
-      <change beforePath="$PROJECT_DIR$/split.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/split.ps1" afterDir="false" />
-    </list>
+    <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="multithreading" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -72,9 +70,9 @@
     </configuration>
     <list>
       <item itemvalue="PowerShell.split.ps1 (mp4)" />
+      <item itemvalue="PowerShell.durations-to-tracks.ps1" />
       <item itemvalue="PowerShell.set-win-context-menu.ps1" />
       <item itemvalue="PowerShell.split.ps1" />
-      <item itemvalue="PowerShell.durations-to-tracks.ps1" />
       <item itemvalue="PowerShell.threads.ps1" />
     </list>
     <recent_temporary>
