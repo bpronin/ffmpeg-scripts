@@ -111,19 +111,41 @@ function Save-Image
         [System.IO.FileInfo]$source
     )
     $name = [System.IO.Path]::GetFileNameWithoutExtension($source)
-    $target = [System.IO.Path]::Combine($source.DirectoryName, "$name-cover.jpg")
+    $target_path = [system.io.directory]::CreateDirectory([System.IO.Path]::Combine($source.Directory, $name))
+    $target = [System.IO.Path]::Combine($target_path, "cover.jpg")
     "Extracting cover image: $target ..."
 
     Copy-Image -source $source -target $target
+}
+
+function Get-MetadataTag
+{
+    param (
+        [String]$name,
+        [String]$value
+    )
+    if ($value)
+    {
+        return " -metadata $name=`"$value`""
+    }
+    else
+    {
+        return ""
+    }
 }
 
 function Format-Metadata
 {
     param (
         [Object]$track,
+        [string]$album,
         [int]$tracks_count
     )
-    $data = "-metadata track=`"$( $track.index )`" -metadata totaltracks=`"$tracks_count`""
+    $data = ""
+    if ($track.index)
+    {
+        $data += " -metadata track=`"$( $track.index )`""
+    }
     if ($track.artist)
     {
         $data += " -metadata artist=`"$( $track.artist )`""
@@ -139,6 +161,14 @@ function Format-Metadata
     if ($track.date)
     {
         $data += " -metadata date=`"$( $track.date )`""
+    }
+    if ($tracks_count)
+    {
+        $data += " -metadata totaltracks=`"$tracks_count`""
+    }
+    if ($album)
+    {
+        $data += " -metadata album=`"$album`""
     }
     return $data
 }
@@ -158,7 +188,7 @@ function Save-Audio
         [System.IO.FileInfo]$source
     )
     $target = [System.IO.Path]::ChangeExtension($source, ".$f")
-    "Extracting audio: $target ..."
+    Write-Host "Extracting audio: $target ..."
 
     Copy-Audio -source $source -target $target -title $source.BaseName
 }
@@ -170,11 +200,14 @@ function Split-Audio
         [Object[]]$tracks
     )
     $tasks = [System.Collections.Arraylist]@()
+    $album = [System.IO.Path]::GetFileNameWithoutExtension($source)
+    $target_path = [system.io.directory]::CreateDirectory([System.IO.Path]::Combine($source.Directory, $album))
+
     for ($index = 0; $index -lt $tracks.count; $index++) {
         $track = $tracks[$index]
         $next_track = $tracks[$index + 1]
         $track_file = Normalize-Filename($track.title)
-        $target = ("{0}\{1:d2} - {2}.{3}" -f $( $source.Directory ), $track.index, $track_file, $f)
+        $target = ("{0}\{1:d2} - {2}.{3}" -f $target_path, $track.index, $track_file, $f)
         Write-Host "Extracting track: $target ..."
 
         $tasks.Add(@{
@@ -183,11 +216,12 @@ function Split-Audio
             title = $track.title
             ss = "-ss $( $track.time )"
             to = IfElse -condition $next_track -yes "-to $( $next_track.time )" -no ""
-            metadata = Format-Metadata -track $track -tracks_count $tracks.count
+            metadata = Format-Metadata -track $track -album $album -tracks_count $tracks.count
         })> $null
     }
 
     $tasks | ForEach-Object -Parallel {
+        #        Write-Host "Extracting audio: $( $_.target ) ..."
         Import-Module -Name $using:PSScriptRoot\ffmpeg
         Copy-Audio -source $( $_.source ) -target $( $_.target ) `
                            -title $( $_.title ) -options "$( $_.ss ) $( $_.to ) $( $_.metadata )"
@@ -217,6 +251,6 @@ else
 
 Save-Image -source $source
 
-Read-Host "Press enter to continue"
+#Read-Host "Press enter to continue"
 
 "Done"
