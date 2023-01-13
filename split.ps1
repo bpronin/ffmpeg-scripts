@@ -121,10 +121,16 @@ function Save-Audio
     param (
         [System.IO.FileInfo]$source
     )
-    $target = [System.IO.Path]::ChangeExtension($source, ".$f")
-    Write-Host "Extracting audio: $target ..."
+    $title = [System.IO.Path]::GetFileNameWithoutExtension($source)
+    $target_path = [system.io.directory]::CreateDirectory([System.IO.Path]::Combine($source.Directory, $title))
+    $target = ("{0}\{1}.{2}" -f $target_path, $title, $f)
+    $metadata = Format-Metadata @{
+        title = $title
+        album = $title
+    }
 
-    Copy-Audio -source $source -target $target -title $source.BaseName
+    Write-Host "Extracting track: $target ..."
+    Copy-Audio -source $source -target $target -options $metadata
 }
 
 function Split-Audio
@@ -192,6 +198,6 @@ else
 
 Save-Image -source $source
 
-#Read-Host "Press enter to continue"
+Read-Host "Press enter to continue"
 
 "Done"
