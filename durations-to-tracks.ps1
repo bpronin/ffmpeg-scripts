@@ -3,7 +3,7 @@
     [string]$i
 )
 
-[Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("windows-1251")
+Import-Module -Name $PSScriptRoot\util
 
 function Read-Time
 {
@@ -28,6 +28,8 @@ function Read-Line
     $time = Read-Time $data[1]
     return $title, $time
 }
+
+Set-ConsoleEncoding "windows-1251"
 
 $source = Get-Item -Path $i
 "Source: " + $source

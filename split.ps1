@@ -4,34 +4,9 @@
     [String]$f = "m4a"
 )
 
-[Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("windows-1251")
-
+#Add-Type -TypeDefinition System.IO
+Import-Module -Name $PSScriptRoot\util
 Import-Module -Name $PSScriptRoot\ffmpeg
-
-function IfElse
-{
-    param (
-        $condition,
-        $yes,
-        $no = $null
-    )
-    if ($condition)
-    {
-        return $yes
-    }
-    else
-    {
-        return $no
-    }
-}
-
-function SafeTrim
-{
-    param (
-        [String]$string
-    )
-    return IfElse -condition $string -yes $string.Trim()
-}
 
 function Read-Time
 {
@@ -56,11 +31,11 @@ function Read-Track
     {
         return @{
             title = SafeTrim($Matches["title"])
-            time = Read-Time $Matches["time"]
             artist = SafeTrim($Matches["artist"])
             date = SafeTrim($Matches["date"])
             performer = SafeTrim($Matches["performer"])
             composer = SafeTrim($Matches["composer"])
+            time = Read-Time $Matches["time"]
         }
     }
     else
@@ -105,31 +80,18 @@ function Read-Tracks
     return $tracks
 }
 
-function Format-MetaClause
+function Format-Interval
 {
     param (
-        [String]$name,
-        [String]$value
+        $track,
+        $next_track
     )
-    return IfElse -condition $value -yes " -metadata $name=`"$value`"" -no ""
-}
-
-function Format-Metadata
-{
-    param (
-        [Object]$track,
-        [string]$album,
-        [int]$tracks_count
-    )
-    $data = ""
-    $data += Format-MetaClause -name "track" -value $track.index
-    $data += Format-MetaClause -name "artist" -value $track.artist
-    $data += Format-MetaClause -name "composer" -value $track.composer
-    $data += Format-MetaClause -name "performer" -value $track.performer
-    $data += Format-MetaClause -name "date" -value $track.date
-    $data += Format-MetaClause -name "totaltracks" -value $tracks_count
-    $data += Format-MetaClause -name "album" -value $album
-    return $data
+    $result = "-ss $( $track.time )"
+    if ($next_track)
+    {
+        $result += " -to $( $next_track.time )"
+    }
+    return $result
 }
 
 function Normalize-Filename
@@ -171,7 +133,7 @@ function Split-Audio
         [System.IO.FileInfo]$source,
         [Object[]]$tracks
     )
-    $tasks = [System.Collections.Arraylist]@()
+    $jobs = [System.Collections.Arraylist]@()
     $album = [System.IO.Path]::GetFileNameWithoutExtension($source)
     $target_path = [system.io.directory]::CreateDirectory([System.IO.Path]::Combine($source.Directory, $album))
 
@@ -182,25 +144,32 @@ function Split-Audio
         $target = ("{0}\{1:d2} - {2}.{3}" -f $target_path, $track.index, $track_file, $f)
         Write-Host "Extracting track: $target ..."
 
-        $tasks.Add(@{
+        $jobs.Add(@{
             source = $source
             target = $target
-            title = $track.title
-            ss = "-ss $( $track.time )"
-            to = IfElse -condition $next_track -yes "-to $( $next_track.time )" -no ""
-            metadata = Format-Metadata -track $track -album $album -tracks_count $tracks.count
+            interval = Format-Interval -track $track -next_track $next_track
+            metadata = Format-Metadata @{
+                track = $track.index
+                title = $track.title
+                artist = $track.artist
+                composer = $track.composer
+                performer = $track.performer
+                date = $track.date
+                totaltracks = $tracks_count
+                album = $album
+            }
         })> $null
     }
 
-    $tasks | ForEach-Object -Parallel {
-        #        Write-Host "Extracting audio: $( $_.target ) ..."
+    $jobs | ForEach-Object -Parallel {
         Import-Module -Name $using:PSScriptRoot\ffmpeg
-        Copy-Audio -source $( $_.source ) -target $( $_.target ) `
-                           -title $( $_.title ) -options "$( $_.ss ) $( $_.to ) $( $_.metadata )"
+        Copy-Audio -source $( $_.source ) -target $( $_.target ) -options "$( $_.interval ) $( $_.metadata )"
     } -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
 }
 
 # --- SCRIPT ENTRY POINT
+
+Set-ConsoleEncoding "windows-1251"
 
 $source = Get-Item -Path $i
 "Source: " + $source

@@ -27,10 +27,9 @@ function Copy-Audio
     param (
         [FileInfo]$source,
         [String]$target,
-        [String]$title,
         [String]$options
     )
-    Invoke-Ffmpeg -source $source -target $target -options "$options -metadata title=`"$title`" -vn -c:a copy"
+    Invoke-Ffmpeg -source $source -options "$options -vn -c:a copy" -target $target
 }
 
 function Copy-Image
@@ -43,6 +42,23 @@ function Copy-Image
     Invoke-Ffmpeg -source $source -target $target -options "-filter:v `"select=eq(n\,$frame)`" -frames:v 1"
 }
 
+function Format-Metadata
+{
+    param (
+        $data
+    )
+    foreach ($k in $data.Keys)
+    {
+        $v = $data[$k]
+        if ($v)
+        {
+            $result += "-metadata $k=`"$v`" "
+        }
+    }
+    return $result
+}
+
 Export-ModuleMember -Function Copy-Audio
 Export-ModuleMember -Function Copy-Image
 Export-ModuleMember -Function Convert-Mp3
+Export-ModuleMember -Function Format-Metadata
