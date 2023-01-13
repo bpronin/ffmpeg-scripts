@@ -217,6 +217,6 @@ else
 
 Save-Image -source $source
 
-#Read-Host "Press enter to continue"
+Read-Host "Press enter to continue"
 
 "Done"

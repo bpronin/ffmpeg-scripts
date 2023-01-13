@@ -9,7 +9,7 @@ function Invoke-Ffmpeg
         $ffmpeg = "c:\Opt\ffmpeg\bin\ffmpeg.exe"
     )
     Invoke-Expression "$ffmpeg -loglevel error -y -i `"$source`" $options `"$target`""
-#    "$ffmpeg -loglevel error -y -i `"$source`" $options `"$target`""
+    #    "$ffmpeg -loglevel error -y -i `"$source`" $options `"$target`""
 }
 
 function Convert-Mp3
@@ -37,9 +37,10 @@ function Copy-Image
 {
     param (
         [FileInfo]$source,
-        [FileInfo]$target
+        [FileInfo]$target,
+        [int]$frame = 1000
     )
-    Invoke-Ffmpeg -source $source -target $target -options "-filter:v `"select=eq(n\,1000)`" -frames:v 1"
+    Invoke-Ffmpeg -source $source -target $target -options "-filter:v `"select=eq(n\,$frame)`" -frames:v 1"
 }
 
 Export-ModuleMember -Function Copy-Audio
