@@ -105,33 +105,13 @@ function Read-Tracks
     return $tracks
 }
 
-function Save-Image
-{
-    param (
-        [System.IO.FileInfo]$source
-    )
-    $name = [System.IO.Path]::GetFileNameWithoutExtension($source)
-    $target_path = [system.io.directory]::CreateDirectory([System.IO.Path]::Combine($source.Directory, $name))
-    $target = [System.IO.Path]::Combine($target_path, "cover.jpg")
-    "Extracting cover image: $target ..."
-
-    Copy-Image -source $source -target $target
-}
-
-function Get-MetadataTag
+function Format-MetaClause
 {
     param (
         [String]$name,
         [String]$value
     )
-    if ($value)
-    {
-        return " -metadata $name=`"$value`""
-    }
-    else
-    {
-        return ""
-    }
+    return IfElse -condition $value -yes " -metadata $name=`"$value`"" -no ""
 }
 
 function Format-Metadata
@@ -142,34 +122,13 @@ function Format-Metadata
         [int]$tracks_count
     )
     $data = ""
-    if ($track.index)
-    {
-        $data += " -metadata track=`"$( $track.index )`""
-    }
-    if ($track.artist)
-    {
-        $data += " -metadata artist=`"$( $track.artist )`""
-    }
-    if ($track.composer)
-    {
-        $data += " -metadata artist=`"$( $track.composer )`""
-    }
-    if ($track.performer)
-    {
-        $data += " -metadata artist=`"$( $track.performer )`""
-    }
-    if ($track.date)
-    {
-        $data += " -metadata date=`"$( $track.date )`""
-    }
-    if ($tracks_count)
-    {
-        $data += " -metadata totaltracks=`"$tracks_count`""
-    }
-    if ($album)
-    {
-        $data += " -metadata album=`"$album`""
-    }
+    $data += Format-MetaClause -name "track" -value $track.index
+    $data += Format-MetaClause -name "artist" -value $track.artist
+    $data += Format-MetaClause -name "composer" -value $track.composer
+    $data += Format-MetaClause -name "performer" -value $track.performer
+    $data += Format-MetaClause -name "date" -value $track.date
+    $data += Format-MetaClause -name "totaltracks" -value $tracks_count
+    $data += Format-MetaClause -name "album" -value $album
     return $data
 }
 
@@ -180,6 +139,19 @@ function Normalize-Filename
     )
 
     return ((($string -replace "[\\/:|<>]", "¦") -replace "[*]", "·") -replace "[?]", "$") -replace "[\`"]", "'"
+}
+
+function Save-Image
+{
+    param (
+        [System.IO.FileInfo]$source
+    )
+    $name = [System.IO.Path]::GetFileNameWithoutExtension($source)
+    $target_path = [system.io.directory]::CreateDirectory([System.IO.Path]::Combine($source.Directory, $name))
+    $target = [System.IO.Path]::Combine($target_path, "cover.jpg")
+    Write-Host "Extracting cover image: $target ..."
+
+    Copy-Image -source $source -target $target
 }
 
 function Save-Audio
