@@ -45,6 +45,16 @@ function Set-ConsoleEncoding
     [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding($encoding)
 }
 
+function Set-Extension
+{
+    param (
+        [System.IO.FileInfo]$file,
+        [String]$extension
+    )
+    return Join-Path $file.Directory "$($file.BaseName)$extension"
+}
+
 Export-ModuleMember -Function SafeTrim
 Export-ModuleMember -Function Get-Capitalized
 Export-ModuleMember -Function Set-ConsoleEncoding
+Export-ModuleMember -Function Set-Extension

@@ -6,7 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="updates">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/convert-mp3.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/convert-mp3.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ffmpeg/ffmpeg.psm1" beforeDir="false" afterPath="$PROJECT_DIR$/ffmpeg/ffmpeg.psm1" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/split.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/split.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/util/util.psm1" beforeDir="false" afterPath="$PROJECT_DIR$/util/util.psm1" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,7 +53,7 @@
       <recent name="C:\Opt\ffmpeg\scripts" />
     </key>
   </component>
-  <component name="RunManager" selected="PowerShell.split.ps1">
+  <component name="RunManager" selected="PowerShell.split.ps1 (mp4)">
     <configuration name="durations-to-tracks.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/durations-to-tracks.ps1" scriptParameters="c:\Temp\~Pending\durations.txt" workingDirectory="C:\Users\boris" executablePath="$PROJECT_DIR$/../../../Windows/System32/WindowsPowerShell/v1.0/powershell.exe">
       <envs />
       <method v="2" />
@@ -80,8 +83,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="PowerShell.set-win-context-menu.ps1" />
         <item itemvalue="PowerShell.split.ps1" />
+        <item itemvalue="PowerShell.set-win-context-menu.ps1" />
         <item itemvalue="PowerShell.durations-to-tracks.ps1" />
         <item itemvalue="PowerShell.threads.ps1" />
         <item itemvalue="PowerShell.threads.ps1" />
@@ -181,7 +184,14 @@
       <option name="project" value="LOCAL" />
       <updated>1673623011505</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="updates">
+      <created>1673645248706</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1673645248706</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

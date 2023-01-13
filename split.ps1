@@ -4,7 +4,6 @@
     [String]$f = "m4a"
 )
 
-#Add-Type -TypeDefinition System.IO
 Import-Module -Name $PSScriptRoot\util
 Import-Module -Name $PSScriptRoot\ffmpeg
 
@@ -59,6 +58,7 @@ function Read-LineFormat
         return "(?<title>.+);(?<time>.+)", 0
     }
 }
+
 function Read-Tracks
 {
     param (
@@ -67,13 +67,14 @@ function Read-Tracks
 
     $lines = @(Get-Content -Path $source -Encoding UTF8)
     $line_format, $start_index = Read-LineFormat $lines[0]
-    $tracks = [System.Collections.Arraylist]@()
+    $tracks = @()
 
     for ($index = $start_index; $index -lt $lines.count; $index++) {
         $track = Read-Track -source $lines[$index] -format $line_format
         if ($track)
         {
-            $track.index = $tracks.Add($track) + 1
+            $tracks += $track
+            $track.index = $tracks.count
         }
     }
 
@@ -83,8 +84,8 @@ function Read-Tracks
 function Format-Interval
 {
     param (
-        $track,
-        $next_track
+        [PSCustomObject]$track,
+        [PSCustomObject]$next_track
     )
     $result = "-ss $( $track.time )"
     if ($next_track)
@@ -97,10 +98,19 @@ function Format-Interval
 function Normalize-Filename
 {
     param (
-        [String]$string
+        [String]$name
     )
 
-    return ((($string -replace "[\\/:|<>]", "¦") -replace "[*]", "·") -replace "[?]", "$") -replace "[\`"]", "'"
+    return ((($name -replace "[\\/:|<>]", "¦") -replace "[*]", "·") -replace "[?]", "$") -replace "[\`"]", "'"
+}
+
+function Get-OutputDir
+{
+    param (
+        [System.IO.FileInfo]$source
+    )
+    $path = Join-Path -Path $source.Directory -ChildPath $source.BaseName
+    return New-Item -ItemType Directory -Path $path -Force
 }
 
 function Save-Image
@@ -108,9 +118,8 @@ function Save-Image
     param (
         [System.IO.FileInfo]$source
     )
-    $name = [System.IO.Path]::GetFileNameWithoutExtension($source)
-    $target_path = [system.io.directory]::CreateDirectory([System.IO.Path]::Combine($source.Directory, $name))
-    $target = [System.IO.Path]::Combine($target_path, "cover.jpg")
+    $target_path = Get-OutputDir -source $source
+    $target = Join-Path $target_path "cover.jpg"
     Write-Host "Extracting cover image: $target ..."
 
     Copy-Image -source $source -target $target
@@ -121,9 +130,11 @@ function Save-Audio
     param (
         [System.IO.FileInfo]$source
     )
-    $title = [System.IO.Path]::GetFileNameWithoutExtension($source)
-    $target_path = [system.io.directory]::CreateDirectory([System.IO.Path]::Combine($source.Directory, $title))
-    $target = ("{0}\{1}.{2}" -f $target_path, $title, $f)
+    $title = $source.BaseName
+    $target_path = Get-OutputDir($source)
+    $target_file = "$(Normalize-Filename -name $title).$f"
+    $target = Join-Path $target_path $target_file
+
     $metadata = Format-Metadata @{
         title = $title
         album = $title
@@ -137,20 +148,19 @@ function Split-Audio
 {
     param (
         [System.IO.FileInfo]$source,
-        [Object[]]$tracks
+        [PSCustomObject[]]$tracks
     )
-    $jobs = [System.Collections.Arraylist]@()
-    $album = [System.IO.Path]::GetFileNameWithoutExtension($source)
-    $target_path = [system.io.directory]::CreateDirectory([System.IO.Path]::Combine($source.Directory, $album))
+    $target_path = Get-OutputDir($source)
+    $jobs = @()
 
     for ($index = 0; $index -lt $tracks.count; $index++) {
         $track = $tracks[$index]
         $next_track = $tracks[$index + 1]
-        $track_file = Normalize-Filename($track.title)
-        $target = ("{0}\{1:d2} - {2}.{3}" -f $target_path, $track.index, $track_file, $f)
+        $target_file = "{0:d2} - $(Normalize-Filename -name $track.title).$f" -f $track.index
+        $target = Join-Path $target_path $target_file
         Write-Host "Extracting track: $target ..."
 
-        $jobs.Add(@{
+        $jobs += @{
             source = $source
             target = $target
             interval = Format-Interval -track $track -next_track $next_track
@@ -162,9 +172,9 @@ function Split-Audio
                 performer = $track.performer
                 date = $track.date
                 totaltracks = $tracks_count
-                album = $album
+                album = $source.BaseName
             }
-        })> $null
+        }
     }
 
     $jobs | ForEach-Object -Parallel {
@@ -180,12 +190,13 @@ Set-ConsoleEncoding "windows-1251"
 $source = Get-Item -Path $i
 "Source: " + $source
 
-$tracklist_path = [System.IO.Path]::ChangeExtension($source, ".tracks")
-if (-not [System.IO.Path]::Exists($tracklist_path))
+$tracklist_file = Set-Extension -file $source -extension ".tracks"
+if (-not(Test-Path -Path $tracklist_file))
 {
-    $tracklist_path = [System.IO.Path]::Combine($source.Directory, "tracks.txt")
+    $tracklist_file = Join-Path $source.Directory "tracks.txt"
 }
-$tracklist = Get-ChildItem -Path $tracklist_path -File -ErrorAction Ignore
+
+$tracklist = Get-ChildItem -Path $tracklist_file -File -ErrorAction Ignore
 if ($tracklist)
 {
     "Track list: $tracklist"
@@ -198,6 +209,6 @@ else
 
 Save-Image -source $source
 
-Read-Host "Press enter to continue"
+#Read-Host "Press enter to continue"
 
 "Done"
