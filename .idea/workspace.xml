@@ -6,8 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="updates">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/convert-mp3.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/convert-mp3.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ffmpeg/ffmpeg.psm1" beforeDir="false" afterPath="$PROJECT_DIR$/ffmpeg/ffmpeg.psm1" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/split.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/split.ps1" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/util/util.psm1" beforeDir="false" afterPath="$PROJECT_DIR$/util/util.psm1" afterDir="false" />
     </list>
@@ -203,7 +201,21 @@
       <option name="project" value="LOCAL" />
       <updated>1673652190761</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="updates">
+      <created>1673686229117</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1673686229117</updated>
+    </task>
+    <task id="LOCAL-00016" summary="updates">
+      <created>1673686284253</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1673686284253</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

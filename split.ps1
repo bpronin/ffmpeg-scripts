@@ -147,7 +147,11 @@ function Save-Audio
 
 function Confirm-Proceed
 {
-    $input = (Read-Host "Is this OK? (y/n)").ToLower()
+    param (
+        [String]$message
+    )
+
+    $input = (Read-Host "$message (y/n)").ToLower()
     if ($input -and -not $input.StartsWith("y"))
     {
         exit
@@ -213,10 +217,16 @@ if ($tracklist_file)
     Write-Output "Track list: $tracklist_file"
 
     $tracklist = Read-Tracks $tracklist_file
-    Write-Output $tracklist | Format-Table
-    Confirm-Proceed
+    if ($tracklist.count -gt 0){
+        Write-Output $tracklist | Format-Table
+        Confirm-Proceed "Proceed with this tracklist?"
 
-    Split-Audio -source $source -tracklist $tracklist
+        Split-Audio -source $source -tracklist $tracklist
+    }
+    else
+    {
+        Confirm-Proceed "Tracklist is empty. Proceed?"
+    }
 }
 else
 {
