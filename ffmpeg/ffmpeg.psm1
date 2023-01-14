@@ -8,8 +8,8 @@ function Invoke-Ffmpeg
         [String]$options,
         $ffmpeg = "c:\Opt\ffmpeg\bin\ffmpeg.exe"
     )
-    Invoke-Expression "$ffmpeg -loglevel error -y -i `"$source`" $options `"$target`""
-    # "$ffmpeg -loglevel error -y -i `"$source`" $options `"$target`""
+#    Invoke-Expression "$ffmpeg -loglevel error -y -i `"$source`" $options `"$target`""
+     "$ffmpeg -loglevel error -y -i `"$source`" $options `"$target`""
 }
 
 function Convert-Mp3

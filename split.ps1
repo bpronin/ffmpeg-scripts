@@ -7,6 +7,17 @@
 Import-Module -Name $PSScriptRoot\util
 Import-Module -Name $PSScriptRoot\ffmpeg
 
+class Track
+{
+    [Int]$Index
+    [TimeSpan]$Time
+    [String]$Title
+    [String]$Artist
+    [String]$Date
+    [String]$Performer
+    [String]$Composer
+}
+
 function Read-Time
 {
     param (
@@ -15,7 +26,7 @@ function Read-Time
     $time_string = $string.Trim()
     if ($time_string.split(":").count -eq 2)
     {
-        $time_string = "00:" + $time_string
+        $time_string = "00:$time_string"
     }
     return [TimeSpan]$time_string
 }
@@ -23,17 +34,17 @@ function Read-Time
 function Read-Track
 {
     param (
-        [String] $source,
+        [String] $string,
         [String] $format
     )
-    if ($source -match $format)
+    if ($string -match $format)
     {
-        return @{
-            title = SafeTrim($Matches["title"])
-            artist = SafeTrim($Matches["artist"])
-            date = SafeTrim($Matches["date"])
-            performer = SafeTrim($Matches["performer"])
-            composer = SafeTrim($Matches["composer"])
+        return New-Object Track -Property @{
+            title = SafeTrim $Matches["title"]
+            artist = SafeTrim $Matches["artist"]
+            date = SafeTrim $Matches["date"]
+            performer = SafeTrim $Matches["performer"]
+            composer = SafeTrim $Matches["composer"]
             time = Read-Time $Matches["time"]
         }
     }
@@ -44,12 +55,11 @@ function Read-Track
 }
 
 function Read-LineFormat
-
 {
     param (
-        [String] $line
+        [String] $string
     )
-    if ($line -match "^\[(.+)\]")
+    if ($string -match "^\[(.+)\]")
     {
         return $Matches[1], 1
     }
@@ -62,15 +72,15 @@ function Read-LineFormat
 function Read-Tracks
 {
     param (
-        [System.IO.FileInfo]$source
+        [System.IO.FileInfo]$file
     )
 
-    $lines = @(Get-Content -Path $source -Encoding UTF8)
+    $lines = @(Get-Content -Path $file -Encoding UTF8)
     $line_format, $start_index = Read-LineFormat $lines[0]
     $tracks = @()
 
     for ($index = $start_index; $index -lt $lines.count; $index++) {
-        $track = Read-Track -source $lines[$index] -format $line_format
+        $track = Read-Track -string $lines[$index] -format $line_format
         if ($track)
         {
             $tracks += $track
@@ -84,8 +94,8 @@ function Read-Tracks
 function Format-Interval
 {
     param (
-        [PSCustomObject]$track,
-        [PSCustomObject]$next_track
+        [Track]$track,
+        [Track]$next_track
     )
     $result = "-ss $( $track.time )"
     if ($next_track)
@@ -95,21 +105,12 @@ function Format-Interval
     return $result
 }
 
-function Normalize-Filename
-{
-    param (
-        [String]$name
-    )
-
-    return ((($name -replace "[\\/:|<>]", "¦") -replace "[*]", "·") -replace "[?]", "$") -replace "[\`"]", "'"
-}
-
 function Get-OutputDir
 {
     param (
-        [System.IO.FileInfo]$source
+        [System.IO.FileInfo]$file
     )
-    $path = Join-Path -Path $source.Directory -ChildPath $source.BaseName
+    $path = Join-Path -Path $file.Directory -ChildPath $file.BaseName
     return New-Item -ItemType Directory -Path $path -Force
 }
 
@@ -118,9 +119,9 @@ function Save-Image
     param (
         [System.IO.FileInfo]$source
     )
-    $target_path = Get-OutputDir -source $source
+    $target_path = Get-OutputDir $source
     $target = Join-Path $target_path "cover.jpg"
-    Write-Host "Extracting cover image: $target ..."
+    Write-Output "Extracting cover image: $target ..."
 
     Copy-Image -source $source -target $target
 }
@@ -131,8 +132,8 @@ function Save-Audio
         [System.IO.FileInfo]$source
     )
     $title = $source.BaseName
-    $target_path = Get-OutputDir($source)
-    $target_file = "$(Normalize-Filename -name $title).$f"
+    $target_path = Get-OutputDir $source
+    $target_file = "$( Get-NormalizedFilename $title ).$f"
     $target = Join-Path $target_path $target_file
 
     $metadata = Format-Metadata @{
@@ -140,25 +141,34 @@ function Save-Audio
         album = $title
     }
 
-    Write-Host "Extracting track: $target ..."
+    Write-Output "Extracting track: $target ..."
     Copy-Audio -source $source -target $target -options $metadata
+}
+
+function Confirm-Proceed
+{
+    $input = (Read-Host "Is this OK? (y/n)").ToLower()
+    if ($input -and -not $input.StartsWith("y"))
+    {
+        exit
+    }
 }
 
 function Split-Audio
 {
     param (
         [System.IO.FileInfo]$source,
-        [PSCustomObject[]]$tracks
+        [Track[]]$tracklist
     )
-    $target_path = Get-OutputDir($source)
+    $target_path = Get-OutputDir $source
     $jobs = @()
 
-    for ($index = 0; $index -lt $tracks.count; $index++) {
-        $track = $tracks[$index]
-        $next_track = $tracks[$index + 1]
-        $target_file = "{0:d2} - $(Normalize-Filename -name $track.title).$f" -f $track.index
+    for ($index = 0; $index -lt $tracklist.count; $index++) {
+        $track = $tracklist[$index]
+        $next_track = $tracklist[$index + 1]
+        $target_file = "{0:d2} - $( Get-NormalizedFilename $track.title ).$f" -f $track.index
         $target = Join-Path $target_path $target_file
-        Write-Host "Extracting track: $target ..."
+#        Write-Output "Extracting track: $target ..."
 
         $jobs += @{
             source = $source
@@ -177,10 +187,11 @@ function Split-Audio
         }
     }
 
-    $jobs | ForEach-Object -Parallel {
-        Import-Module -Name $using:PSScriptRoot\ffmpeg
-        Copy-Audio -source $( $_.source ) -target $( $_.target ) -options "$( $_.interval ) $( $_.metadata )"
-    } -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
+        $jobs | ForEach-Object -Parallel {
+            Import-Module -Name $using:PSScriptRoot\ffmpeg
+#            Write-Output "Extracting track: $($_.target) ..."
+            Copy-Audio -source $( $_.source ) -target $( $_.target ) -options "$( $_.interval ) $( $_.metadata )"
+        } -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
 }
 
 # --- SCRIPT ENTRY POINT
@@ -190,17 +201,22 @@ Set-ConsoleEncoding "windows-1251"
 $source = Get-Item -Path $i
 "Source: " + $source
 
-$tracklist_file = Set-Extension -file $source -extension ".tracks"
-if (-not(Test-Path -Path $tracklist_file))
+$tracklist_filename = Set-Extension -file $source -extension ".tracks"
+if (-not(Test-Path -Path $tracklist_filename))
 {
-    $tracklist_file = Join-Path $source.Directory "tracks.txt"
+    $tracklist_filename = Join-Path $source.Directory "tracks.txt"
 }
 
-$tracklist = Get-ChildItem -Path $tracklist_file -File -ErrorAction Ignore
-if ($tracklist)
+$tracklist_file = Get-ChildItem -Path $tracklist_filename -File -ErrorAction Ignore
+if ($tracklist_file)
 {
-    "Track list: $tracklist"
-    Split-Audio -source $source -tracks (Read-Tracks -source $tracklist)
+    Write-Output "Track list: $tracklist_file"
+
+    $tracklist = Read-Tracks $tracklist_file
+    Write-Output $tracklist | Format-Table
+    Confirm-Proceed
+
+    Split-Audio -source $source -tracklist $tracklist
 }
 else
 {

@@ -18,7 +18,7 @@ function Add-Tasks
     elseif ($item.Extension -in $SUPPORTED_FORMATS)
     {
         $target = Set-Extension -file $item -extension ".mp3"
-        Write-Host "Converting: $target  ..."
+        Write-Output "Converting: $target  ..."
 
         $jobs.value += @{
             source = $item
