@@ -16,6 +16,11 @@ class Track
     [String]$Date
     [String]$Performer
     [String]$Composer
+    [String]$Genre
+    [String]$Album
+    [String]$AlbumArtist
+    [Int]$DiskNumber
+    [Int]$TotalDisks
 }
 
 function Read-Time
@@ -30,22 +35,36 @@ function Read-Time
     }
     return [TimeSpan]$time_string
 }
+function Read-TrackField
+{
+    param (
+        [String] $value,
+        [String] $default_value
+    )
+    return $value ? $value.Trim() : $default_value
+}
 
 function Read-Track
 {
     param (
         [String] $string,
-        [String] $format
+        [String] $format,
+        $defaults
     )
     if ($string -match $format)
     {
         return New-Object Track -Property @{
-            title = SafeTrim $Matches["title"]
-            artist = SafeTrim $Matches["artist"]
-            date = SafeTrim $Matches["date"]
-            performer = SafeTrim $Matches["performer"]
-            composer = SafeTrim $Matches["composer"]
-            time = Read-Time $Matches["time"]
+            Time = Read-Time $Matches.time
+            Title = Read-TrackField $Matches.title
+            Artist = Read-TrackField $Matches.artist $defaults.artist
+            Date = Read-TrackField $Matches.date $defaults.date
+            Genre = Read-TrackField $Matches.genre $defaults.genre
+            Performer = Read-TrackField $Matches.performer $defaults.performer
+            Composer = Read-TrackField $Matches.composer $defaults.composer
+            Album = Read-TrackField $Matches.album $defaults.album
+            AlbumArtist = Read-TrackField $Matches.album_artist $defaults.album_artist
+            DiskNumber = Read-TrackField $Matches.disk_number $defaults.disk_number
+            TotalDisks = Read-TrackField $Matches.total_disks $defaults.total_disks
         }
     }
     else
@@ -72,15 +91,15 @@ function Read-LineFormat
 function Read-Tracks
 {
     param (
-        [System.IO.FileInfo]$file
+        [System.IO.FileInfo]$file,
+        $config
     )
-
     $lines = @(Get-Content -Path $file -Encoding UTF8)
     $line_format, $start_index = Read-LineFormat $lines[0]
     $tracks = @()
 
     for ($index = $start_index; $index -lt $lines.count; $index++) {
-        $track = Read-Track -string $lines[$index] -format $line_format
+        $track = Read-Track -string $lines[$index] -format $line_format -defaults $config.track_defaults
         if ($track)
         {
             $tracks += $track
@@ -162,40 +181,45 @@ function Split-Audio
 {
     param (
         [System.IO.FileInfo]$source,
-        [Track[]]$tracklist
+        [Track[]]$track_list,
+        $config
     )
     $target_path = Get-OutputDir $source
     $jobs = @()
 
-    for ($index = 0; $index -lt $tracklist.count; $index++) {
-        $track = $tracklist[$index]
-        $next_track = $tracklist[$index + 1]
+    for ($index = 0; $index -lt $track_list.count; $index++) {
+        $track = $track_list[$index]
+        $next_track = $track_list[$index + 1]
         $target_file = "{0:d2} - $( Get-NormalizedFilename $track.title ).$f" -f $track.index
         $target = Join-Path $target_path $target_file
-#        Write-Output "Extracting track: $target ..."
+        #        Write-Output "Extracting track: $target ..."
 
         $jobs += @{
             source = $source
             target = $target
             interval = Format-Interval -track $track -next_track $next_track
             metadata = Format-Metadata @{
-                track = $track.index
-                title = $track.title
-                artist = $track.artist
-                composer = $track.composer
-                performer = $track.performer
-                date = $track.date
+                track = $track.Index
+                title = $track.Title
+                artist = $track.Artist
+                composer = $track.Composer
+                performer = $track.Performer
+                date = $track.Date
+                genre = $track.Genre
+                album = $track.Album
+                album_artist = $track.AlbumArtist
+                disc = $track.DiskNumber
+                totaldiscs = $track.TotalDisks
                 totaltracks = $tracks_count
-                album = $source.BaseName
             }
         }
     }
 
-        $jobs | ForEach-Object -Parallel {
-            Import-Module -Name $using:PSScriptRoot\ffmpeg
-#            Write-Output "Extracting track: $($_.target) ..."
-            Copy-Audio -source $( $_.source ) -target $( $_.target ) -options "$( $_.interval ) $( $_.metadata )"
-        } -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
+    $jobs | ForEach-Object -Parallel {
+        Import-Module -Name $using:PSScriptRoot\ffmpeg
+        #            Write-Output "Extracting track: $($_.target) ..."
+        Copy-Audio -source $( $_.source ) -target $( $_.target ) -options "$( $_.interval ) $( $_.metadata )"
+    } -AsJob -ThrottleLimit 10 | Wait-Job | Receive-Job
 }
 
 # --- SCRIPT ENTRY POINT
@@ -203,29 +227,34 @@ function Split-Audio
 Set-ConsoleEncoding "windows-1251"
 
 $source = Get-Item -Path $i
-"Source: " + $source
+Write-Output "Source: $source"
 
-$tracklist_filename = Set-Extension -file $source -extension ".tracks"
-if (-not(Test-Path -Path $tracklist_filename))
-{
-    $tracklist_filename = Join-Path $source.Directory "tracks.txt"
+$config = (Get-Content -Path (Join-Path $source.Directory "extract-config.json") -ErrorAction Ignore) | ConvertFrom-Json -AsHashtable
+if ($config -and -not $config.track_defaults.album){
+    $config.track_defaults.album = $source.BaseName
 }
 
-$tracklist_file = Get-ChildItem -Path $tracklist_filename -File -ErrorAction Ignore
-if ($tracklist_file)
+$track_list_filename = Set-Extension -file $source -extension ".tracks"
+if (-not(Test-Path -Path $track_list_filename))
 {
-    Write-Output "Track list: $tracklist_file"
+    $track_list_filename = Join-Path $source.Directory "tracks.txt"
+}
+$track_list_file = Get-ChildItem -Path $track_list_filename -File -ErrorAction Ignore
+if ($track_list_file)
+{
+    Write-Output "Track list: $track_list_file"
 
-    $tracklist = Read-Tracks $tracklist_file
-    if ($tracklist.count -gt 0){
-        Write-Output $tracklist | Format-Table
-        Confirm-Proceed "Proceed with this tracklist?"
+    $track_list = Read-Tracks -file $track_list_file -config $config
+    if ($track_list.count -gt 0)
+    {
+        Write-Output $track_list | Format-Table
+        Confirm-Proceed "Proceed with this track list?"
 
-        Split-Audio -source $source -tracklist $tracklist
+        Split-Audio -source $source -config $config -track_list $track_list
     }
     else
     {
-        Confirm-Proceed "Tracklist is empty. Proceed?"
+        Confirm-Proceed "Track list is empty. Proceed?"
     }
 }
 else

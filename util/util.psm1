@@ -29,14 +29,6 @@ function Get-Capitalized
     }) -join " "
 }
 
-function SafeTrim
-{
-    param (
-        [String]$string
-    )
-    return $string ? $string.Trim() : $null
-}
-
 function Set-ConsoleEncoding
 {
     param (
@@ -63,7 +55,6 @@ function Get-NormalizedFilename
     return ((($name -replace "[\\/:|<>]", "¦") -replace "[*]", "·") -replace "[?]", "$") -replace "[\`"]", "'"
 }
 
-Export-ModuleMember -Function SafeTrim
 Export-ModuleMember -Function Get-Capitalized
 Export-ModuleMember -Function Set-ConsoleEncoding
 Export-ModuleMember -Function Set-Extension
