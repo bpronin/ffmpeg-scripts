@@ -6,8 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="updates">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/split.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/split.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/util.psm1" beforeDir="false" afterPath="$PROJECT_DIR$/util/util.psm1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/music.ico" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,10 +34,13 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Opt/bo-hotkeys&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;terminal&quot;
+    &quot;last_opened_file_path&quot;: &quot;C:/Opt/ffmpeg/scripts&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;Settings.PowerShell&quot;
   }
 }</component>
   <component name="RecentsManager">
@@ -51,7 +53,7 @@
       <recent name="C:\Opt\ffmpeg\scripts" />
     </key>
   </component>
-  <component name="RunManager" selected="PowerShell.threads.ps1">
+  <component name="RunManager" selected="PowerShell.tester.ps1">
     <configuration name="durations-to-tracks.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/durations-to-tracks.ps1" scriptParameters="c:\Temp\~Pending\durations.txt" workingDirectory="C:\Users\boris" executablePath="$PROJECT_DIR$/../../../Windows/System32/WindowsPowerShell/v1.0/powershell.exe">
       <envs />
       <method v="2" />
@@ -64,15 +66,7 @@
       <envs />
       <method v="2" />
     </configuration>
-    <configuration name="split.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/split.ps1" scriptParameters="c:\Temp\~Pending\source.m4a" workingDirectory="C:\Users\boris" executablePath="C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe">
-      <envs />
-      <method v="2" />
-    </configuration>
     <configuration name="tester.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/tester.ps1" workingDirectory="C:\Users\boris" executablePath="C:\Program Files\WindowsApps\Microsoft.PowerShell_7.3.1.0_x64__8wekyb3d8bbwe\pwsh.exe">
-      <envs />
-      <method v="2" />
-    </configuration>
-    <configuration name="threads.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/threads.ps1" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
       <envs />
       <method v="2" />
     </configuration>
@@ -80,15 +74,11 @@
       <item itemvalue="PowerShell.split.ps1 (mp4)" />
       <item itemvalue="PowerShell.durations-to-tracks.ps1" />
       <item itemvalue="PowerShell.set-win-context-menu.ps1" />
-      <item itemvalue="PowerShell.split.ps1" />
-      <item itemvalue="PowerShell.threads.ps1" />
       <item itemvalue="PowerShell.tester.ps1" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="PowerShell.threads.ps1" />
         <item itemvalue="PowerShell.tester.ps1" />
-        <item itemvalue="PowerShell.split.ps1" />
         <item itemvalue="PowerShell.set-win-context-menu.ps1" />
         <item itemvalue="PowerShell.durations-to-tracks.ps1" />
       </list>
@@ -105,6 +95,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1672920982396</updated>
+      <workItem from="1673726619648" duration="188000" />
     </task>
     <task id="LOCAL-00001" summary="update">
       <created>1673268763167</created>
@@ -225,8 +216,18 @@
       <option name="project" value="LOCAL" />
       <updated>1673688369706</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="updates">
+      <created>1673697893946</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1673697893946</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
