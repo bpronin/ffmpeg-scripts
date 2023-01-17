@@ -35,6 +35,7 @@ function Read-Time
     }
     return [TimeSpan]$time_string
 }
+
 function Read-TrackField
 {
     param (
@@ -48,10 +49,10 @@ function Read-Track
 {
     param (
         [String] $string,
-        [String] $format,
+        [String] $regex,
         $defaults
     )
-    if ($string -match $format)
+    if ($string -match $regex)
     {
         return New-Object Track -Property @{
             Time = Read-Time $Matches.time
@@ -73,40 +74,21 @@ function Read-Track
     }
 }
 
-function Read-LineFormat
-{
-    param (
-        [String] $string
-    )
-    if ($string -match "^\[(.+)\]")
-    {
-        return $Matches[1], 1
-    }
-    else
-    {
-        return "(?<title>.+);(?<time>.+)", 0
-    }
-}
-
 function Read-Tracks
 {
     param (
-        [System.IO.FileInfo]$file,
         $config
     )
-    $lines = @(Get-Content -Path $file -Encoding UTF8)
-    $line_format, $start_index = Read-LineFormat $lines[0]
     $tracks = @()
-
-    for ($index = $start_index; $index -lt $lines.count; $index++) {
-        $track = Read-Track -string $lines[$index] -format $line_format -defaults $config.track_defaults
+    foreach ($line in $config.tracks.raw)
+    {
+        $track = Read-Track -string $line -regex $config.formats.track -defaults $config.defaults
         if ($track)
         {
             $tracks += $track
             $track.index = $tracks.count
         }
     }
-
     return $tracks
 }
 
@@ -150,8 +132,8 @@ function Save-Audio
     param (
         [System.IO.FileInfo]$source
     )
-    $title = $source.BaseName
     $target_path = Get-OutputDir $source
+    $title = $source.BaseName
     $target_file = "$( Get-NormalizedFilename $title ).$f"
     $target = Join-Path $target_path $target_file
 
@@ -162,19 +144,6 @@ function Save-Audio
 
     Write-Output "Extracting track: $target ..."
     Copy-Audio -source $source -target $target -options $metadata
-}
-
-function Confirm-Proceed
-{
-    param (
-        [String]$message
-    )
-
-    $input = (Read-Host "$message (y/n)").ToLower()
-    if ($input -and -not $input.StartsWith("y"))
-    {
-        exit
-    }
 }
 
 function Split-Audio
@@ -229,36 +198,27 @@ Set-ConsoleEncoding "windows-1251"
 $source = Get-Item -Path $i
 Write-Output "Source: $source"
 
-$config = (Get-Content -Path (Join-Path $source.Directory "extract-config.json") -ErrorAction Ignore) | ConvertFrom-Json -AsHashtable
-if ($config -and -not $config.track_defaults.album){
-    $config.track_defaults.album = $source.BaseName
+#$config = (Get-Content -Path (Join-Path $source.Directory "extract-config.json") -ErrorAction Ignore) | ConvertFrom-Ini
+$config = Get-IniContent -Path (Join-Path $source.Directory "tracks.ini")
+if ($config -and -not$config.defaults.album)
+{
+    $config.defaults.album = $source.BaseName
+}
+if ($config -and -not$config.formats.track)
+{
+    $config.formats.track = "(?<title>.+);(?<time>.+)"
 }
 
-$track_list_filename = Set-Extension -file $source -extension ".tracks"
-if (-not(Test-Path -Path $track_list_filename))
+$track_list = Read-Tracks -config $config
+if ($track_list.count -gt 0)
 {
-    $track_list_filename = Join-Path $source.Directory "tracks.txt"
-}
-$track_list_file = Get-ChildItem -Path $track_list_filename -File -ErrorAction Ignore
-if ($track_list_file)
-{
-    Write-Output "Track list: $track_list_file"
-
-    $track_list = Read-Tracks -file $track_list_file -config $config
-    if ($track_list.count -gt 0)
-    {
-        Write-Output $track_list | Format-Table
-        Confirm-Proceed "Proceed with this track list?"
-
-        Split-Audio -source $source -config $config -track_list $track_list
-    }
-    else
-    {
-        Confirm-Proceed "Track list is empty. Proceed?"
-    }
+    Write-Output $track_list | Format-Table
+    Confirm-Proceed "Proceed with this track list?"
+    Split-Audio -source $source -config $config -track_list $track_list
 }
 else
 {
+    Confirm-Proceed "Track list is empty. Proceed with single track?"
     Save-Audio -source $source
 }
 

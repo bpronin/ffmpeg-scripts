@@ -58,36 +58,53 @@ function Get-NormalizedFilename
 function Get-IniContent
 {
     param(
-        [String]$filename
+        [String]$path
     )
 
     $map = @{ }
     $section = "no-section"
     $map[$section] = @{ }
-    switch -regex -file $filename
+    switch -regex -file $path
     {
         "^\s*[;#](.*)$" {
-            Write-Debug $matches[1]
+            Write-Debug "Comment: $($matches[1])"
+            continue
         }
         "^\s*\[(.+)\]\s*$" {
-            $section = $matches[1]
+            $section = $matches[1].Trim()
             $map[$section] = @{ }
+            continue
         }
-        "^\s*(.+)\s*=\s*(.*)$" {
-            $name, $value = $matches[1..2]
-            $map[$section][$name] = $value
+        "^\s*(.+)=(.*)$" {
+            $map[$section][$matches[1].Trim()] = $matches[2].Trim()
+            continue
         }
         default {
-            if (-not$map[$section]["raw"])
+            $section_map = $map[$section]
+            if (-not$section_map.raw)
             {
-                $map[$section]["raw"] = @()
+                $section_map.raw = @()
             }
-            $map[$section]["raw"] += $_
+            $section_map.raw += $_
         }
     }
     $map
 }
 
+function Confirm-Proceed
+{
+    param (
+        [String]$message
+    )
+
+    $input = (Read-Host "$message (y/n)").ToLower()
+    if ($input -and -not $input.StartsWith("y"))
+    {
+        exit
+    }
+}
+
+Export-ModuleMember -Function Confirm-Proceed
 Export-ModuleMember -Function Get-Capitalized
 Export-ModuleMember -Function Set-ConsoleEncoding
 Export-ModuleMember -Function Set-Extension
