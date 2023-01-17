@@ -43,7 +43,7 @@ function Set-Extension
         [System.IO.FileInfo]$file,
         [String]$extension
     )
-    return Join-Path $file.Directory "$($file.BaseName)$extension"
+    return Join-Path $file.Directory "$( $file.BaseName )$extension"
 }
 
 function Get-NormalizedFilename
@@ -55,40 +55,47 @@ function Get-NormalizedFilename
     return ((($name -replace "[\\/:|<>]", "¦") -replace "[*]", "·") -replace "[?]", "$") -replace "[\`"]", "'"
 }
 
-function Get-IniContent
+function ConvertFrom-Ini
 {
+    [CmdletBinding()]
     param(
-        [String]$path
+        [Parameter(ValueFromPipeline)]
+        [String[]]$lines
     )
-
-    $map = @{ }
-    $section = "no-section"
-    $map[$section] = @{ }
-    switch -regex -file $path
-    {
-        "^\s*[;#](.*)$" {
-            Write-Debug "Comment: $($matches[1])"
-            continue
-        }
-        "^\s*\[(.+)\]\s*$" {
-            $section = $matches[1].Trim()
-            $map[$section] = @{ }
-            continue
-        }
-        "^\s*(.+)=(.*)$" {
-            $map[$section][$matches[1].Trim()] = $matches[2].Trim()
-            continue
-        }
-        default {
-            $section_map = $map[$section]
-            if (-not$section_map.raw)
-            {
-                $section_map.raw = @()
+    begin{
+        $map = @{ }
+        $section = "no_section"
+        $map[$section] = @{ }
+    }
+    process{
+        switch -regex ($lines)
+        {
+            "^\s*[;#](.*)$" {
+                Write-Debug "Comment: $( $matches[1] )"
+                continue
             }
-            $section_map.raw += $_
+            "^\s*\[(.+)\]\s*$" {
+                $section = $matches[1].Trim()
+                $map[$section] = @{ }
+                continue
+            }
+            "^\s*(.+)=(.*)$" {
+                $map[$section][$matches[1].Trim()] = $matches[2].Trim()
+                continue
+            }
+            default {
+                $section_map = $map[$section]
+                if (-not$section_map.raw)
+                {
+                    $section_map.raw = @()
+                }
+                $section_map.raw += $_
+            }
         }
     }
-    $map
+    end{
+        return $map
+    }
 }
 
 function Confirm-Proceed
@@ -109,4 +116,4 @@ Export-ModuleMember -Function Get-Capitalized
 Export-ModuleMember -Function Set-ConsoleEncoding
 Export-ModuleMember -Function Set-Extension
 Export-ModuleMember -Function Get-NormalizedFilename
-Export-ModuleMember -Function Get-IniContent
+Export-ModuleMember -Function ConvertFrom-Ini

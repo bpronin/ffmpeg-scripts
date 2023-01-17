@@ -198,8 +198,7 @@ Set-ConsoleEncoding "windows-1251"
 $source = Get-Item -Path $i
 Write-Output "Source: $source"
 
-#$config = (Get-Content -Path (Join-Path $source.Directory "extract-config.json") -ErrorAction Ignore) | ConvertFrom-Ini
-$config = Get-IniContent -Path (Join-Path $source.Directory "tracks.ini")
+$config = (Get-Content -Path (Join-Path $source.Directory "tracks.ini") -ErrorAction Ignore) | ConvertFrom-Ini
 if ($config -and -not$config.defaults.album)
 {
     $config.defaults.album = $source.BaseName
