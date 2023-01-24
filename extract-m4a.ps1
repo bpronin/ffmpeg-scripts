@@ -1,48 +1,30 @@
 Import-Module -Name $PSScriptRoot\util
+Import-Module -Name $PSScriptRoot\ffmpeg
 
-$supported_ext = @(".mkv", ".mp4")
+$include = @("*.mkv", "*.mp4")
+$tasks = @()
 
-function Add-Tasks
-{
-    param (
-        [System.IO.FileSystemInfo]$path,
-        [ref]$tasks
-    )
-
-    if ($path.PSIsContainer)
-    {
-        Get-ChildItem -Path $path -Recurse | ForEach-Object{
-            Add-Tasks -item $_ -tasks $tasks
-        }
-    }
-    else
-    {
-        $tasks.value += @{
-            source = $path
-            target = Set-Extension -File $path -Extension ".m4a"
+$args | ForEach-Object {
+    Get-ChildItem -Path $_ -Include $include -Recurse | ForEach-Object{
+        $tasks += @{
+            source = $_
+            target = Set-Extension -File $_ -Extension ".m4a"
             metadata = @{
-                title = $path.BaseName
+                title = $_.BaseName
             }
         }
     }
 }
 
-$tasks = @()
-
-foreach ($path in $args)
-{
-    Add-Tasks -path (Get-Item -Path $path) -tasks ([ref]$tasks)
-}
-
-foreach ($task in $tasks)
-{
+$tasks | ForEach-Object {
     Start-ThreadJob -ScriptBlock {
+        $task = $using:_
+        Write-Host "Extracting track: $( $task.target )"
         Import-Module -Name $using:PSScriptRoot\ffmpeg
-        $t = $using:task
-        Write-Host "Extracting track: $( $t.target )"
-        Copy-Audio -source $t.source -target $t.target -metadata $t.metadata
-    } -StreamingHost $Host -ThrottleLimit 30 | Receive-Job
+        Copy-Audio -source $task.source -target $task.target -metadata $task.metadata
+    } -StreamingHost $Host -ThrottleLimit 50 -ArgumentList $_ | Receive-Job
 }
+
 Get-Job | Wait-Job | Out-Null
 
 Write-Output "Done"

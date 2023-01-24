@@ -38,7 +38,7 @@ function Copy-Image
     param (
         [FileInfo]$source,
         [FileInfo]$target,
-        [int]$frame = 1000
+        [Int]$frame = 1000
     )
     Invoke-Ffmpeg -source $source -target $target -options "-filter:v `"select=eq(n\,$frame)`" -frames:v 1"
 }
