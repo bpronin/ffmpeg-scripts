@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="update track list format">
+    <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="update multithreading execution">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts.iml" beforeDir="false" afterPath="$PROJECT_DIR$/scripts.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/split.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/split.ps1" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -17,11 +19,16 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="PowerShell File" />
+        <option value="HTTP Request" />
+        <option value="Kotlin Script" />
       </list>
     </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HttpClientSelectedEnvironments">
+    <file url="jar://$APPLICATION_HOME_DIR$/plugins/restClient/lib/restClient.jar!/com/intellij/ws/rest/client/requests/collection/get-requests.http" environment="test" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -32,17 +39,18 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Opt/ffmpeg/scripts&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "cidr.known.project.marker": "true",
+    "last_opened_file_path": "C:/Opt/ffmpeg/scripts",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.PowerShell"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Opt\ffmpeg\scripts" />
@@ -53,7 +61,7 @@
       <recent name="C:\Opt\ffmpeg\scripts\ffmpeg" />
     </key>
   </component>
-  <component name="RunManager" selected="PowerShell.split.ps1 (mp4)">
+  <component name="RunManager" selected="PowerShell.split.ps1 (folder)">
     <configuration name="durations-to-tracks.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/durations-to-tracks.ps1" scriptParameters="c:\Temp\~Pending\durations.txt" workingDirectory="C:\Users\boris" executablePath="$PROJECT_DIR$/../../../Windows/System32/WindowsPowerShell/v1.0/powershell.exe">
       <envs />
       <method v="2" />
@@ -62,16 +70,21 @@
       <envs />
       <method v="2" />
     </configuration>
+    <configuration name="split.ps1 (folder)" type="PowerShellRunType" factoryName="PowerShell" scriptUrl="$PROJECT_DIR$/split.ps1" scriptParameters="c:\Temp\~Pending\test\list" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
+      <envs />
+      <method v="2" />
+    </configuration>
     <configuration name="split.ps1 (mp4)" type="PowerShellRunType" factoryName="PowerShell" scriptUrl="$PROJECT_DIR$/split.ps1" scriptParameters="c:\Temp\~Pending\test\audio.mp4" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
       <envs />
       <method v="2" />
     </configuration>
-    <configuration name="tester.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/tester.ps1" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
+    <configuration name="tester.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/tester.ps1" scriptParameters="file1.txt file2.txt file3.txt" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
       <envs />
       <method v="2" />
     </configuration>
     <list>
       <item itemvalue="PowerShell.split.ps1 (mp4)" />
+      <item itemvalue="PowerShell.split.ps1 (folder)" />
       <item itemvalue="PowerShell.durations-to-tracks.ps1" />
       <item itemvalue="PowerShell.set-win-context-menu.ps1" />
       <item itemvalue="PowerShell.tester.ps1" />
@@ -96,6 +109,13 @@
       <option name="presentableId" value="Default" />
       <updated>1672920982396</updated>
       <workItem from="1673726619648" duration="188000" />
+      <workItem from="1674386352856" duration="112000" />
+      <workItem from="1674502561374" duration="843000" />
+      <workItem from="1674550447723" duration="598000" />
+      <workItem from="1674551644535" duration="40000" />
+      <workItem from="1674551925581" duration="146000" />
+      <workItem from="1674552116809" duration="587000" />
+      <workItem from="1674568628421" duration="3807000" />
     </task>
     <task id="LOCAL-00001" summary="update">
       <created>1673268763167</created>
@@ -251,7 +271,14 @@
       <option name="project" value="LOCAL" />
       <updated>1673963064279</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="update multithreading execution">
+      <created>1673987926496</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1673987926497</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -265,6 +292,36 @@
             <State />
           </value>
         </entry>
+        <entry key="f17e3661-d711-43cc-9494-db97f5575deb">
+          <value>
+            <State>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="f17e3661-d711-43cc-9494-db97f5575deb" value="TOOL_WINDOW" />
       </map>
     </option>
   </component>
@@ -274,6 +331,11 @@
     <MESSAGE value="updates" />
     <MESSAGE value="add ini parser" />
     <MESSAGE value="update track list format" />
-    <option name="LAST_COMMIT_MESSAGE" value="update track list format" />
+    <MESSAGE value="update multithreading execution" />
+    <option name="LAST_COMMIT_MESSAGE" value="update multithreading execution" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

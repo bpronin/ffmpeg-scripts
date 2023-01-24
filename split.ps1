@@ -1,8 +1,10 @@
 ﻿param (
     [Parameter(Mandatory = $true)]
-    [String]$i,
-    [String]$f = "m4a"
+    [String]$i
 )
+
+$include_files = @("*.flac", "*.mkv", "*.mp4", "*.m4a")
+$f = "m4a"
 
 Import-Module -Name $PSScriptRoot\util
 Import-Module -Name $PSScriptRoot\ffmpeg
@@ -42,7 +44,15 @@ function Read-TrackField
         [String] $value,
         [String] $default_value
     )
-    return $value ? $value.Trim() : $default_value
+
+    if ($value)
+    {
+        return $value.Trim()
+    }
+    else
+    {
+        return $default_value
+    }
 }
 
 function Read-Track
@@ -55,6 +65,7 @@ function Read-Track
     if ($string -match $regex)
     {
         return New-Object Track -Property @{
+            Index = Read-TrackField $Matches.index
             Time = Read-Time $Matches.time
             Title = Read-TrackField $Matches.title
             Artist = Read-TrackField $Matches.artist $defaults.artist
@@ -86,7 +97,10 @@ function Read-Tracks
         if ($track)
         {
             $tracks += $track
-            $track.index = $tracks.count
+            if (-not$track.index)
+            {
+                $track.index = $tracks.count
+            }
         }
     }
     return $tracks
@@ -190,43 +204,69 @@ function Split-Audio
             $t = $using:task
             Write-Host "Extracting track: $( $t.target )"
             Copy-Audio -source $t.source -target $t.target -options $t.options
-        } -StreamingHost $Host -ThrottleLimit 10 | Receive-Job
+        } -StreamingHost $Host -ThrottleLimit 20 | Receive-Job
     }
     Get-Job | Wait-Job | Out-Null
 }
 
+function Process-File()
+{
+    param(
+        [System.IO.FileInfo]$source
+    )
+
+    Write-Output "Source: $source"
+
+    $config_path = Join-Path $source.Directory "tracks.ini"
+    if (-not(Test-Path -Path $config_path))
+    {
+        $config_path = Get-Item -Path "$PSScriptRoot\default-tracks.ini"
+    }
+
+    $config = Get-Content -Path $config_path | ConvertFrom-Ini
+    if ($config.defaults -and -not$config.defaults.album)
+    {
+        $config.defaults.album = $source.BaseName
+    }
+
+    if ($config.formats -and -not$config.formats.track)
+    {
+        $config.formats.track = "(?<title>.+);(?<time>.+)"
+    }
+
+    $track_list = Read-Tracks -config $config
+    if ($track_list.count -gt 0)
+    {
+        Write-Output $track_list | Format-Table
+        Confirm-Proceed "Proceed with this track list?"
+        Split-Audio -source $source -config $config -track_list $track_list
+    }
+    else
+    {
+#        Confirm-Proceed "Track list is empty. Proceed with single track?"
+        Save-Audio -source $source
+    }
+
+    Save-Image -source $source
+
+    #Read-Host "Press enter to continue"
+}
 # --- SCRIPT ENTRY POINT
 
 Set-ConsoleEncoding "windows-1251"
 
-$source = Get-Item -Path $i
-Write-Output "Source: $source"
+$path = Get-Item -Path $i
+Write-Output "Path: $path"
 
-$config = (Get-Content -Path (Join-Path $source.Directory "tracks.ini") -ErrorAction Ignore) | ConvertFrom-Ini
-if ($config -and -not$config.defaults.album)
+if ($path.PSIsContainer)
 {
-    $config.defaults.album = $source.BaseName
-}
-if ($config -and -not$config.formats.track)
-{
-    $config.formats.track = "(?<title>.+);(?<time>.+)"
-}
-
-$track_list = Read-Tracks -config $config
-if ($track_list.count -gt 0)
-{
-    Write-Output $track_list | Format-Table
-    Confirm-Proceed "Proceed with this track list?"
-    Split-Audio -source $source -config $config -track_list $track_list
+    Get-ChildItem –Path $path -Recurse -Include $include_files | Foreach-Object {
+        Process-File -source $_
+    }
 }
 else
 {
-    Confirm-Proceed "Track list is empty. Proceed with single track?"
-    Save-Audio -source $source
+    Process-File -source $path
 }
 
-Save-Image -source $source
-
-#Read-Host "Press enter to continue"
-
-"Done"
+Write-Output "Done"
