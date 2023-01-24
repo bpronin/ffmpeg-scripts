@@ -4,11 +4,9 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="add m4a extractor">
+    <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="update m4a extractor">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/extract-m4a.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/extract-m4a.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ffmpeg/ffmpeg.psm1" beforeDir="false" afterPath="$PROJECT_DIR$/ffmpeg/ffmpeg.psm1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/util.psm1" beforeDir="false" afterPath="$PROJECT_DIR$/util/util.psm1" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,7 +64,7 @@
       <envs />
       <method v="2" />
     </configuration>
-    <configuration name="extract-m4a.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/extract-m4a.ps1" scriptParameters="c:\Temp\~Pending\test" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
+    <configuration name="extract-m4a.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/extract-m4a.ps1" scriptParameters="c:\Temp\~Pending\test\list" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
       <envs />
       <method v="2" />
     </configuration>
@@ -298,7 +296,14 @@
       <option name="project" value="LOCAL" />
       <updated>1674575760377</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="update m4a extractor">
+      <created>1674591068256</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1674591068256</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -353,7 +358,8 @@
     <MESSAGE value="update track list format" />
     <MESSAGE value="update multithreading execution" />
     <MESSAGE value="add m4a extractor" />
-    <option name="LAST_COMMIT_MESSAGE" value="add m4a extractor" />
+    <MESSAGE value="update m4a extractor" />
+    <option name="LAST_COMMIT_MESSAGE" value="update m4a extractor" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
