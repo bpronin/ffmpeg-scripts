@@ -12,14 +12,15 @@ function Invoke-Ffmpeg
 #     "$ffmpeg -loglevel error -y -i `"$source`" $options `"$target`""
 }
 
-function Convert-Mp3
+function Convert-Audio
 {
     param (
         [FileInfo]$source,
         [String]$target,
-        [String]$title
+        [Hashtable]$metadata,
+        [String]$options
     )
-    Invoke-Ffmpeg -source $source -target $target -options "-metadata title=`"$title`" -acodec mp3 -aq 4"
+    Invoke-Ffmpeg -source $source -target $target -options "$(Format-Metadata($metadata)) $options"
 }
 
 function Copy-Audio
@@ -61,5 +62,5 @@ function Format-Metadata
 
 Export-ModuleMember -Function Copy-Audio
 Export-ModuleMember -Function Copy-Image
-Export-ModuleMember -Function Convert-Mp3
+Export-ModuleMember -Function Convert-Audio
 Export-ModuleMember -Function Format-Metadata

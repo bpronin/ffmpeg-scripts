@@ -12,7 +12,7 @@ $args | ForEach-Object {
                 Write-Host "Extracting track: $target"
 
                 Import-Module -Name $using:PSScriptRoot\ffmpeg
-                Copy-Audio -source $source -target $target -metadata $metadata
+                Convert-Audio -source $source -target $target -metadata $metadata -options "-vn -c:a copy"
         } -StreamingHost $Host -ThrottleLimit 50 -ArgumentList $_ | Receive-Job
     }
 }

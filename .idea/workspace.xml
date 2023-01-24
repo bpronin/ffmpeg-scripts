@@ -5,8 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="update m4a extractor">
+      <change afterPath="$PROJECT_DIR$/convert-ac3.ps1" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_convert-ac3.bat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/_convert-mp3.bat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/convert-mp3.bat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/convert-mp3.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/convert-mp3.ps1" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/extract-m4a.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/extract-m4a.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ffmpeg/ffmpeg.psm1" beforeDir="false" afterPath="$PROJECT_DIR$/ffmpeg/ffmpeg.psm1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/util/util.psm1" beforeDir="false" afterPath="$PROJECT_DIR$/util/util.psm1" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,18 +44,19 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Opt/ffmpeg/scripts&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settingsdialog.IDE.editor.colors.PowerShell&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "cidr.known.project.marker": "true",
+    "last_opened_file_path": "C:/Opt/ffmpeg/scripts",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.editor",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Opt\ffmpeg\scripts" />
@@ -59,7 +67,11 @@
       <recent name="C:\Opt\ffmpeg\scripts\ffmpeg" />
     </key>
   </component>
-  <component name="RunManager" selected="PowerShell.extract-m4a.ps1">
+  <component name="RunManager" selected="PowerShell.convert-mp3.ps1">
+    <configuration name="convert-mp3.ps1" type="PowerShellRunType" factoryName="PowerShell" scriptUrl="C:\Opt\ffmpeg\scripts\convert-mp3.ps1" scriptParameters="c:\Temp\~Pending\test\list" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
+      <envs />
+      <method v="2" />
+    </configuration>
     <configuration name="durations-to-tracks.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/durations-to-tracks.ps1" scriptParameters="c:\Temp\~Pending\durations.txt" workingDirectory="C:\Users\boris" executablePath="$PROJECT_DIR$/../../../Windows/System32/WindowsPowerShell/v1.0/powershell.exe">
       <envs />
       <method v="2" />
@@ -85,19 +97,17 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="PowerShell.split.ps1 (mp4)" />
       <item itemvalue="PowerShell.split.ps1 (folder)" />
+      <item itemvalue="PowerShell.split.ps1 (mp4)" />
+      <item itemvalue="PowerShell.convert-mp3.ps1" />
       <item itemvalue="PowerShell.durations-to-tracks.ps1" />
+      <item itemvalue="PowerShell.extract-m4a.ps1" />
       <item itemvalue="PowerShell.set-win-context-menu.ps1" />
       <item itemvalue="PowerShell.tester.ps1" />
-      <item itemvalue="PowerShell.extract-m4a.ps1" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="PowerShell.extract-m4a.ps1" />
-        <item itemvalue="PowerShell.tester.ps1" />
-        <item itemvalue="PowerShell.set-win-context-menu.ps1" />
-        <item itemvalue="PowerShell.durations-to-tracks.ps1" />
       </list>
     </recent_temporary>
   </component>
@@ -120,6 +130,8 @@
       <workItem from="1674551925581" duration="146000" />
       <workItem from="1674552116809" duration="587000" />
       <workItem from="1674568628421" duration="3842000" />
+      <workItem from="1674596191357" duration="70000" />
+      <workItem from="1674596809075" duration="190000" />
     </task>
     <task id="LOCAL-00001" summary="update">
       <created>1673268763167</created>
@@ -303,7 +315,14 @@
       <option name="project" value="LOCAL" />
       <updated>1674591068256</updated>
     </task>
-    <option name="localTasksCounter" value="27" />
+    <task id="LOCAL-00027" summary="update m4a extractor">
+      <created>1674595306648</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1674595306648</updated>
+    </task>
+    <option name="localTasksCounter" value="28" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
