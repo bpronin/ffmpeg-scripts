@@ -6,9 +6,9 @@ function Invoke-Ffmpeg
         [FileInfo]$source,
         [String]$target,
         [String]$options,
-        $ffmpeg = "c:\Opt\ffmpeg\bin\ffmpeg.exe"
+        [String]$executable = "c:\Opt\ffmpeg\bin\ffmpeg.exe"
     )
-    Invoke-Expression "$ffmpeg -loglevel error -y -i `"$source`" $options `"$target`""
+    Invoke-Expression "$executable -loglevel error -y -i `"$source`" $options `"$target`""
 #     "$ffmpeg -loglevel error -y -i `"$source`" $options `"$target`""
 }
 
@@ -27,9 +27,10 @@ function Copy-Audio
     param (
         [FileInfo]$source,
         [String]$target,
+        [Hashtable]$metadata,
         [String]$options
     )
-    Invoke-Ffmpeg -source $source -options "$options -vn -c:a copy" -target $target
+    Invoke-Ffmpeg -source $source -target $target -options "$(Format-Metadata($metadata)) $options -vn -c:a copy"
 }
 
 function Copy-Image
@@ -45,7 +46,7 @@ function Copy-Image
 function Format-Metadata
 {
     param (
-        $data
+        [Hashtable]$data
     )
     foreach ($k in $data.Keys)
     {
