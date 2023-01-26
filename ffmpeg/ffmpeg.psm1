@@ -11,8 +11,8 @@ function Invoke-Ffmpeg
         [String]$Executable = "c:\Opt\ffmpeg\bin\ffmpeg.exe"
     )
 
-    Write-Host "$Executable -loglevel error -y -i `"$Source`" $Options `"$Target`""
-    #    Invoke-Expression "$executable -loglevel error -y -i `"$source`" $options `"$target`"" -Verbose
+#    Write-Host "$Executable -loglevel error -y -i `"$Source`" $Options `"$Target`""
+    Invoke-Expression "$executable -loglevel error -y -i `"$source`" $options `"$target`""
 }
 
 function Convert-Audio
