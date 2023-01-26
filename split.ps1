@@ -4,7 +4,7 @@
 )
 
 $include_files = @("*.flac", "*.mkv", "*.mp4", "*.m4a")
-$f = "m4a"
+$output_format = "m4a"
 
 Import-Module -Name $PSScriptRoot\util
 Import-Module -Name $PSScriptRoot\ffmpeg
@@ -148,7 +148,7 @@ function Save-Audio
     )
     $target_path = Get-OutputDir $source
     $title = $source.BaseName
-    $target_file = "$( Get-NormalizedFilename $title ).$f"
+    $target_file = "$( Get-NormalizedFilename $title ).$output_format"
     $target = Join-Path $target_path $target_file
 
     $metadata = Format-Metadata @{
@@ -173,7 +173,7 @@ function Split-Audio
     for ($index = 0; $index -lt $track_list.count; $index++) {
         $track = $track_list[$index]
         $next_track = $track_list[$index + 1]
-        $target_file = "{0:d2} - $( Get-NormalizedFilename $track.title ).$f" -f $track.index
+        $target_file = "{0:d2} - $( Get-NormalizedFilename $track.title ).$output_format" -f $track.index
         $target = Join-Path $target_path $target_file
         $interval = Format-Interval -track $track -next_track $next_track
         $metadata = Format-Metadata @{
