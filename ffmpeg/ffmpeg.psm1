@@ -59,6 +59,17 @@ function Convert-Audio
     }
 }
 
+function Copy-Audio
+{
+    param (
+        [FileInfo]$source,
+        [String]$target,
+        [Hashtable]$metadata,
+        [String]$options
+    )
+    Invoke-Ffmpeg -source $source -target $target -options "$( Format-Metadata($metadata) ) $options -vn -c:a copy"
+}
+
 function Copy-Image
 {
     param (
@@ -98,17 +109,6 @@ function Convert-AllAudio
     }
 }
 
-function Copy-Audio
-{
-    param (
-        [FileInfo]$source,
-        [String]$target,
-        [Hashtable]$metadata,
-        [String]$options
-    )
-    Invoke-Ffmpeg -source $source -target $target -options "$( Format-Metadata($metadata) ) $options -vn -c:a copy"
-}
-
 function Format-Metadata
 {
     param (
@@ -126,8 +126,6 @@ function Format-Metadata
     return $result
 }
 
-Export-ModuleMember -Function Copy-Audio
 Export-ModuleMember -Function Copy-Image
 Export-ModuleMember -Function Convert-Audio
 Export-ModuleMember -Function Convert-AllAudio
-Export-ModuleMember -Function Format-Metadata

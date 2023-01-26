@@ -3,7 +3,7 @@
     [String]$i
 )
 
-$include_files = @("*.flac", "*.mkv", "*.mp4", "*.m4a")
+$include = @("*.flac", "*.mkv", "*.mp4", "*.m4a")
 $output_format = "m4a"
 
 Import-Module -Name $PSScriptRoot\util
@@ -175,38 +175,35 @@ function Split-Audio
         $next_track = $track_list[$index + 1]
         $target_file = "{0:d2} - $( Get-NormalizedFilename $track.title ).$output_format" -f $track.index
         $target = Join-Path $target_path $target_file
-        $interval = Format-Interval -track $track -next_track $next_track
-        $metadata = Format-Metadata @{
-            track = $track.Index
-            title = $track.Title
-            artist = $track.Artist
-            composer = $track.Composer
-            performer = $track.Performer
-            date = $track.Date
-            genre = $track.Genre
-            album = $track.Album
-            album_artist = $track.AlbumArtist
-            disc = $track.DiskNumber
-            totaldiscs = $track.TotalDisks
-            totaltracks = $tracks_count
-        }
+
         $tasks += @{
             source = $source
             target = $target
-            options = "$interval $metadata"
+            interval = Format-Interval -track $track -next_track $next_track
+            metadata = @{
+                track = $track.Index
+                title = $track.Title
+                artist = $track.Artist
+                composer = $track.Composer
+                performer = $track.Performer
+                date = $track.Date
+                genre = $track.Genre
+                album = $track.Album
+                album_artist = $track.AlbumArtist
+                disc = $track.DiskNumber
+                totaldiscs = $track.TotalDisks
+                totaltracks = $tracks_count
+            }
         }
     }
 
-    foreach ($task in $tasks)
-    {
-        Start-ThreadJob -ScriptBlock {
-            Import-Module -Name $using:PSScriptRoot\ffmpeg
-            $t = $using:task
-            Write-Host "Extracting track: $( $t.target )"
-            Copy-Audio -source $t.source -target $t.target -options $t.options
-        } -StreamingHost $Host -ThrottleLimit 20 | Receive-Job
+    $tasks | ForEach-Object -Parallel {
+        Write-Host "Extracting track: $( $_.target )"
+
+        Import-Module -Name $using:PSScriptRoot\ffmpeg
+        Convert-Audio -Source $_.source -Target $_.target -Metadata $_.metadata `
+                      -Options "$($_.interval) -vn -c:a copy"
     }
-    Get-Job | Wait-Job | Out-Null
 }
 
 function Process-File()
@@ -260,7 +257,7 @@ Write-Output "Path: $path"
 
 if ($path.PSIsContainer)
 {
-    Get-ChildItem –Path $path -Recurse -Include $include_files | Foreach-Object {
+    Get-ChildItem –Path $path -Recurse -Include $include | Foreach-Object {
         Process-File -source $_
     }
 }
