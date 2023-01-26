@@ -12,22 +12,18 @@ function Invoke-ForAllRecursivelyParallel
         [Int]$ThrottleLimit = 30
     )
     process{
+#        $Items | ForEach-Object {
+#            Get-ChildItem -Path $_ -Include $Include -Recurse | ForEach-Object{
+#                Start-ThreadJob -ScriptBlock $ScriptBlock -StreamingHost $Host -ThrottleLimit $ThrottleLimit `
+#                                    -InputObject $_ | Receive-Job
+#            }
+#        }
+#        Get-Job | Wait-Job | Out-Null
+
         $Items | ForEach-Object {
-            Get-ChildItem -Path $_ -Include $Include -Recurse | ForEach-Object{
-                Start-ThreadJob -ScriptBlock $ScriptBlock -StreamingHost $Host -ThrottleLimit $ThrottleLimit `
-                                    -InputObject $_ | Receive-Job
-            }
+            Get-ChildItem -Path $_ -Include $Include -Recurse | ForEach-Object -Parallel $ScriptBlock `
+                          -ThrottleLimit $ThrottleLimit
         }
-        Get-Job | Wait-Job | Out-Null
-
-        #        $Items | ForEach-Object {
-        #            Get-ChildItem -Path $_ -Include $Include -Recurse | ForEach-Object -Process $ScriptBlock -InputObject $_
-        #            {
-        #                Start-ThreadJob -ScriptBlock $ScriptBlock -StreamingHost $Host -ThrottleLimit $ThrottleLimit `
-        #                                    -ArgumentList $_ | Receive-Job
-        #            }
-        #        }
-
     }
 }
 
@@ -43,7 +39,7 @@ function Invoke-Ffmpeg
     )
     process{
         $command = "$Executable -loglevel error -y -i `"$Source`" $Options `"$Target`""
-        #        Write-Host $command
+#         Write-Host $command
         Invoke-Expression $command
     }
 }
@@ -88,13 +84,13 @@ function Convert-AllAudio
     )
     process{
         $Paths | Invoke-ForAllRecursivelyParallel -Include $Include -ThrottleLimit 50 -ScriptBlock {
-            $source = Get-Item -Path $input
+            $source = $_
             $target = Join-Path $source.DirectoryName "$( $source.BaseName ).$using:OutputFormat"
             $metadata = @{
                 title = $source.BaseName
             }
 
-            Write-Host "Converting: $target"
+            Write-Host "Converting: $target..."
 
             Import-Module -Name $using:PSScriptRoot\ffmpeg
             Convert-Audio -Source $source -Target $target -Metadata $metadata -Options $using:Options
