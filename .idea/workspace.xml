@@ -6,9 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="bcd0748d-8027-4d92-a166-4320d58b6392" name="Changes" comment="update mp3 convertor">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/convert-ac3.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/convert-ac3.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/convert-mp3.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/convert-mp3.ps1" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/extract-m4a.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/extract-m4a.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ffmpeg/ffmpeg.psm1" beforeDir="false" afterPath="$PROJECT_DIR$/ffmpeg/ffmpeg.psm1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/util.psm1" beforeDir="false" afterPath="$PROJECT_DIR$/util/util.psm1" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +63,11 @@
       <recent name="C:\Opt\ffmpeg\scripts\ffmpeg" />
     </key>
   </component>
-  <component name="RunManager" selected="PowerShell.extract-m4a.ps1">
+  <component name="RunManager" selected="PowerShell.convert-ac3.ps1">
+    <configuration name="convert-ac3.ps1" type="PowerShellRunType" factoryName="PowerShell" scriptUrl="C:\Opt\ffmpeg\scripts\convert-ac3.ps1" scriptParameters="c:\Temp\~Pending\test\list" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
+      <envs />
+      <method v="2" />
+    </configuration>
     <configuration name="convert-mp3.ps1" type="PowerShellRunType" factoryName="PowerShell" scriptUrl="C:\Opt\ffmpeg\scripts\convert-mp3.ps1" scriptParameters="c:\Temp\~Pending\test\list" workingDirectory="C:\Users\boris" executablePath="pwsh.exe">
       <envs />
       <method v="2" />
@@ -96,6 +100,7 @@
       <item itemvalue="PowerShell.split.ps1 (folder)" />
       <item itemvalue="PowerShell.split.ps1 (mp4)" />
       <item itemvalue="PowerShell.convert-mp3.ps1" />
+      <item itemvalue="PowerShell.convert-ac3.ps1" />
       <item itemvalue="PowerShell.extract-m4a.ps1" />
       <item itemvalue="PowerShell.durations-to-tracks.ps1" />
       <item itemvalue="PowerShell.set-win-context-menu.ps1" />
@@ -339,7 +344,14 @@
       <option name="project" value="LOCAL" />
       <updated>1674725996335</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="update mp3 convertor">
+      <created>1674730583152</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1674730583152</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
