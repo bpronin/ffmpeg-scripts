@@ -1,10 +1,5 @@
-﻿param (
-    [Parameter(Mandatory = $true)]
-    [String]$i
-)
-
-$include = @("*.flac", "*.mkv", "*.mp4", "*.m4a")
-$output_format = "m4a"
+﻿$include = @("*.mkv", "*.mp4")
+$outputFormat = "m4a"
 
 Import-Module -Name $PSScriptRoot\util
 Import-Module -Name $PSScriptRoot\ffmpeg
@@ -28,89 +23,96 @@ class Track
 function Read-Time
 {
     param (
-        [String]$string
+        [String]$String
     )
-    $time_string = $string.Trim()
-    if ($time_string.split(":").count -eq 2)
-    {
-        $time_string = "00:$time_string"
+    process {
+        $timeString = $String.Trim()
+        if ($timeString.split(":").count -eq 2)
+        {
+            $timeString = "00:$timeString"
+        }
+        return [TimeSpan]$timeString
     }
-    return [TimeSpan]$time_string
 }
 
 function Read-TrackField
 {
     param (
-        [String] $value,
-        [String] $default_value
+        [String] $Value,
+        [String] $DefaultValue
     )
-
-    if ($value)
-    {
-        return $value.Trim()
-    }
-    else
-    {
-        return $default_value
+    process {
+        if ($Value)
+        {
+            return $Value.Trim()
+        }
+        else
+        {
+            return $DefaultValue
+        }
     }
 }
 
 function Read-Track
 {
     param (
-        [String] $string,
-        [String] $regex,
-        $defaults
+        [String] $String,
+        [String] $Regex,
+        [Hashtable] $Defaults
     )
-    if ($string -match $regex)
-    {
-        return New-Object Track -Property @{
-            Index = Read-TrackField $Matches.index
-            Time = Read-Time $Matches.time
-            Title = Read-TrackField $Matches.title
-            Artist = Read-TrackField $Matches.artist $defaults.artist
-            Date = Read-TrackField $Matches.date $defaults.date
-            Genre = Read-TrackField $Matches.genre $defaults.genre
-            Performer = Read-TrackField $Matches.performer $defaults.performer
-            Composer = Read-TrackField $Matches.composer $defaults.composer
-            Album = Read-TrackField $Matches.album $defaults.album
-            AlbumArtist = Read-TrackField $Matches.album_artist $defaults.album_artist
-            DiskNumber = Read-TrackField $Matches.disk_number $defaults.disk_number
-            TotalDisks = Read-TrackField $Matches.total_disks $defaults.total_disks
+    process {
+        if ($String -match $Regex)
+        {
+            return New-Object Track -Property @{
+                Index = Read-TrackField $Matches.index
+                Time = Read-Time $Matches.time
+                Title = Read-TrackField $Matches.title
+                Artist = Read-TrackField $Matches.artist $Defaults.artist
+                Date = Read-TrackField $Matches.date $Defaults.date
+                Genre = Read-TrackField $Matches.genre $Defaults.genre
+                Performer = Read-TrackField $Matches.performer $Defaults.performer
+                Composer = Read-TrackField $Matches.composer $Defaults.composer
+                Album = Read-TrackField $Matches.album $Defaults.album
+                AlbumArtist = Read-TrackField $Matches.album_artist $Defaults.album_artist
+                DiskNumber = Read-TrackField $Matches.disk_number $Defaults.disk_number
+                TotalDisks = Read-TrackField $Matches.total_disks $Defaults.total_disks
+            }
         }
-    }
-    else
-    {
-        return $null
+        else
+        {
+            return $null
+        }
     }
 }
 
 function Read-Tracks
 {
     param (
-        $config
+        [Hashtable] $Config
     )
-    $tracks = @()
-    foreach ($line in $config.tracks.raw)
-    {
-        $track = Read-Track -string $line -regex $config.formats.track -defaults $config.defaults
-        if ($track)
+    process {
+        $tracks = @()
+        foreach ($line in $Config.tracks.raw)
         {
-            $tracks += $track
-            if (-not$track.index)
+            $track = Read-Track -string $line -regex $Config.formats.track -defaults $Config.defaults
+            if ($track)
             {
-                $track.index = $tracks.count
+                $tracks += $track
+                if (-not$track.index)
+                {
+                    $track.index = $tracks.count
+                }
             }
         }
+        return $tracks
     }
-    return $tracks
 }
 
 function Format-Interval
 {
     param (
-        [Track]$track,
-        [Track]$next_track
+        [Track] $track,
+        [Track] $next_track
     )
     $result = "-ss $( $track.time )"
     if ($next_track)
@@ -123,147 +125,151 @@ function Format-Interval
 function Get-OutputDir
 {
     param (
-        [System.IO.FileInfo]$file
+        [System.IO.FileInfo] $Source
     )
-    $path = Join-Path -Path $file.Directory -ChildPath $file.BaseName
-    return New-Item -ItemType Directory -Path $path -Force
+    process {
+        $path = Join-Path -Path $Source.Directory -ChildPath $Source.BaseName
+        return New-Item -ItemType Directory -Path $path -Force
+    }
 }
 
 function Save-Image
 {
     param (
-        [System.IO.FileInfo]$source
+        [System.IO.FileInfo] $Source,
+        [Hashtable] $Config
     )
-    $target_path = Get-OutputDir $source
-    $target = Join-Path $target_path "cover.jpg"
-    Write-Output "Extracting cover image: $target ..."
+    process {
+        $targetPath = Get-OutputDir $Source
+        $target = Join-Path $targetPath "cover.jpg"
 
-    Copy-Image -source $source -target $target
-}
+        Write-Output "Extracting cover image: $target ..."
 
-function Save-Audio
-{
-    param (
-        [System.IO.FileInfo]$source
-    )
-    $target_path = Get-OutputDir $source
-    $title = $source.BaseName
-    $target_file = "$( Get-NormalizedFilename $title ).$output_format"
-    $target = Join-Path $target_path $target_file
-
-    $metadata = Format-Metadata @{
-        title = $title
-        album = $title
+        Copy-Image -Source $Source -Target $target -Frame $Config.cover.frame
     }
-
-    Write-Output "Extracting track: $target ..."
-    Copy-Audio -source $source -target $target -options $metadata
 }
 
 function Split-Audio
 {
     param (
-        [System.IO.FileInfo]$source,
-        [Track[]]$track_list,
-        $config
+        [System.IO.FileInfo] $Source,
+        [Track[]] $TrackList,
+        [Hashtable] $Config
     )
-    $target_path = Get-OutputDir $source
-    $tasks = @()
+    process {
 
-    for ($index = 0; $index -lt $track_list.count; $index++) {
-        $track = $track_list[$index]
-        $next_track = $track_list[$index + 1]
-        $target_file = "{0:d2} - $( Get-NormalizedFilename $track.title ).$output_format" -f $track.index
-        $target = Join-Path $target_path $target_file
+        $targetPath = Get-OutputDir $Source
+        $tasks = @()
 
-        $tasks += @{
-            source = $source
-            target = $target
-            interval = Format-Interval -track $track -next_track $next_track
-            metadata = @{
-                track = $track.Index
-                title = $track.Title
-                artist = $track.Artist
-                composer = $track.Composer
-                performer = $track.Performer
-                date = $track.Date
-                genre = $track.Genre
-                album = $track.Album
-                album_artist = $track.AlbumArtist
-                disc = $track.DiskNumber
-                totaldiscs = $track.TotalDisks
-                totaltracks = $tracks_count
+        for ($index = 0; $index -lt $TrackList.count; $index++) {
+            $track = $TrackList[$index]
+            $nextTrack = $TrackList[$index + 1]
+            $targetFile = "{0:d2} - $( Get-NormalizedFilename $track.title ).$outputFormat" -f $track.index
+            $target = Join-Path $targetPath $targetFile
+
+            $tasks += @{
+                source = $Source
+                target = $target
+                interval = Format-Interval -track $track -next_track $nextTrack
+                metadata = @{
+                    track = $track.Index
+                    title = $track.Title
+                    artist = $track.Artist
+                    composer = $track.Composer
+                    performer = $track.Performer
+                    date = $track.Date
+                    genre = $track.Genre
+                    album = $track.Album
+                    album_artist = $track.AlbumArtist
+                    disc = $track.DiskNumber
+                    totaldiscs = $track.TotalDisks
+                    totaltracks = $tracks_count
+                }
             }
         }
-    }
 
-    $tasks | ForEach-Object -Parallel {
-        Write-Host "Extracting track: $( $_.target )"
+        $tasks | ForEach-Object -Parallel {
+            Write-Host "Extracting track: $( $_.target )"
 
-        Import-Module -Name $using:PSScriptRoot\ffmpeg
-        Convert-Audio -Source $_.source -Target $_.target -Metadata $_.metadata `
-                      -Options "$($_.interval) -vn -c:a copy"
+            Import-Module -Name $using:PSScriptRoot\ffmpeg
+            Convert-Audio -Source $_.source -Target $_.target -Metadata $_.metadata `
+                      -Options "$( $_.interval ) -vn -c:a copy"
+        }
     }
 }
 
 function Process-File()
 {
     param(
-        [System.IO.FileInfo]$source
+        [System.IO.FileInfo] $Source
     )
+    process {
+        Write-Output "Source: $Source"
 
-    Write-Output "Source: $source"
+        $config_path = Join-Path $Source.Directory "tracks.ini"
+        if (-not(Test-Path -Path $config_path))
+        {
+            $config_path = Get-Item -Path "$PSScriptRoot\default-tracks.ini"
+        }
 
-    $config_path = Join-Path $source.Directory "tracks.ini"
-    if (-not(Test-Path -Path $config_path))
-    {
-        $config_path = Get-Item -Path "$PSScriptRoot\default-tracks.ini"
+        $config = Get-Content -Path $config_path | ConvertFrom-Ini
+        if ($config.defaults -and -not$config.defaults.album)
+        {
+            $config.defaults.album = $Source.BaseName
+        }
+
+        if ($config.formats -and -not$config.formats.track)
+        {
+            $config.formats.track = "(?<title>.+);(?<time>.+)"
+        }
+
+        $track_list = Read-Tracks -config $config
+        if ($track_list.count -gt 0)
+        {
+            Write-Output $track_list | Format-Table
+            Confirm-Proceed "Proceed with this track list?"
+        }
+        else
+        {
+            $track_list += New-Object Track -Property @{
+                Title = $Source.BaseName
+                Artist = $config.defaults.artist
+                Date = $config.defaults.date
+                Genre = $config.defaults.genre
+                Performer = $config.defaults.performer
+                Composer = $config.defaults.composer
+                Album = $config.defaults.album
+                AlbumArtist = $config.defaults.album_artist
+                DiskNumber = $config.defaults.disk_number
+                TotalDisks = $config.defaults.total_disks
+            }
+            #        Write-Output $track_list | Format-Table
+            #        Confirm-Proceed "No track list data. Proceed with single track?"
+        }
+
+        Split-Audio -Source $Source -Config $config -TrackList $track_list
+        Save-Image -Source $Source -Config $config
     }
-
-    $config = Get-Content -Path $config_path | ConvertFrom-Ini
-    if ($config.defaults -and -not$config.defaults.album)
-    {
-        $config.defaults.album = $source.BaseName
-    }
-
-    if ($config.formats -and -not$config.formats.track)
-    {
-        $config.formats.track = "(?<title>.+);(?<time>.+)"
-    }
-
-    $track_list = Read-Tracks -config $config
-    if ($track_list.count -gt 0)
-    {
-        Write-Output $track_list | Format-Table
-        Confirm-Proceed "Proceed with this track list?"
-        Split-Audio -source $source -config $config -track_list $track_list
-    }
-    else
-    {
-#        Confirm-Proceed "Track list is empty. Proceed with single track?"
-        Save-Audio -source $source
-    }
-
-    Save-Image -source $source
-
-    #Read-Host "Press enter to continue"
 }
+
 # --- SCRIPT ENTRY POINT
 
 Set-ConsoleEncoding "windows-1251"
 
-$path = Get-Item -Path $i
-Write-Output "Path: $path"
+$args | ForEach-Object {
+    $path = Get-Item -Path $_
+    Write-Output "Path: $path"
 
-if ($path.PSIsContainer)
-{
-    Get-ChildItem –Path $path -Recurse -Include $include | Foreach-Object {
-        Process-File -source $_
+    if ($path.PSIsContainer)
+    {
+        Get-ChildItem –Path $path -Recurse -Include $include | Foreach-Object {
+            Process-File -source $_
+        }
     }
-}
-else
-{
-    Process-File -source $path
+    else
+    {
+        Process-File -source $path
+    }
 }
 
 Write-Output "Done"
