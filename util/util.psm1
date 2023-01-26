@@ -111,45 +111,9 @@ function Confirm-Proceed
     }
 }
 
-function Invoke-InThreads
-{
-    param(
-        [Parameter(ValueFromPipeline)]
-        [String[]]$Items,
-
-        [Parameter(Mandatory = $true)]
-        [ScriptBlock]$Process,
-
-        [Int]$ThrottleLimit = 10
-    )
-    process{
-        $Items | Start-ThreadJob -ScriptBlock $Process -StreamingHost $Host `
-                    -ThrottleLimit $ThrottleLimit -ArgumentList $_ | Receive-Job
-        Get-Job | Wait-Job | Out-Null
-    }
-}
-
-function Invoke-ForEachInThread
-{
-    param(
-        [Parameter(ValueFromPipeline)]
-        [Object[]]$items,
-        [ScriptBlock]$process
-    )
-    $items | ForEach-Object {
-        Get-ChildItem -Path $_ -Include $include -Recurse | ForEach-Object{
-            Start-ThreadJob -ScriptBlock $process -StreamingHost $Host -ThrottleLimit 50 -ArgumentList $_ | Receive-Job
-        }
-    }
-
-    Get-Job | Wait-Job | Out-Null
-}
-
 Export-ModuleMember -Function Confirm-Proceed
 Export-ModuleMember -Function Get-Capitalized
 Export-ModuleMember -Function Set-ConsoleEncoding
 Export-ModuleMember -Function Set-Extension
 Export-ModuleMember -Function Get-NormalizedFilename
 Export-ModuleMember -Function ConvertFrom-Ini
-Export-ModuleMember -Function Invoke-InThreads
-Export-ModuleMember -Function Invoke-ForEachInThread
