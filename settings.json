@@ -1,0 +1,44 @@
+{
+  "track_patterns": [
+    {
+      "title": "time artist 'title'",
+      "pattern": "(?<time>[\\d:]+)\\s+(?<artist>.+)\\s'(?<title>.+)'"
+    },
+    {
+      "title": "index - title time",
+      "pattern": "(?<index>\\d+)\\s-\\s(?<title>.+)\\s(?<time>[\\d:]+)"
+    },
+    {
+      "title": "time title",
+      "pattern": "(?<time>[\\d:]+)\\s+(?<title>.+)"
+    },
+    {
+      "title": "time - title",
+      "pattern": "(?<time>[\\d:]+)\\s+-\\s+(?<title>.+)"
+    },
+    {
+      "title": "time - title - artist",
+      "pattern": "(?<time>[\\d:]+)\\s+-\\s+(?<title>.+)\\s+-\\s+(?<artist>.+)"
+    },
+    {
+      "title": "time - artist - title",
+      "pattern": "(?<time>[\\d:]+)\\s+-\\s+(?<artist>.+)\\s+-\\s+(?<title>.+)"
+    },
+    {
+      "title": "time title - artist",
+      "pattern": "(?<time>[\\d:]+)\\s+(?<title>.+)\\s+-\\s+(?<artist>.+)"
+    },
+    {
+      "title": "time artist - title",
+      "pattern": "(?<time>[\\d:]+)\\s+(?<artist>.+)\\s+-\\s+(?<title>.+)"
+    },
+    {
+      "title": "title/artist time",
+      "pattern": "(?<title>.+)/(?<artist>.+)\\s+(?<time>[\\d:]+)"
+    },
+    {
+      "title": "title - time",
+      "pattern": "(?<title>.+)\\s+-\\s+(?<time>[\\d:]+)"
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+<html>
+
+<head>
+    <script lang="javascript">
+        // var clip_id = "DE4Dsc-5lRo"
+        var clip_id = ""
+
+        function updateViews() {
+            for (const img of document.getElementsByClassName("img_clip_preview")) {
+                img.src = "https://img.youtube.com/vi/" + clip_id + "/" + img.id + ".jpg"
+            }
+
+            document.getElementById("video_clip").src = "https://www.youtube.com/embed/" + clip_id
+        }
+
+        function updateClipId() {
+            var value = document.getElementById("clip_id_editor").value
+            clip_id = value.replace("https://www.youtube.com/watch?v=", "")
+            updateViews()
+        }
+
+        function initClipId() {
+            clip_id = ""
+            document.getElementById("clip_id_editor").value = clip_id
+            updateViews()
+        }
+
+        window.onload = function(){
+            initClipId()
+        }
+        
+    </script>
+</head>
+
+<body>
+    <div>
+        <label for="clip_id_editor">Video clip URL:</label>
+        <input id="clip_id_editor" type="text" size="60">
+        <button onclick="initClipId()">X</button>
+        <button onclick="updateClipId()">Load images</button>
+    </div>
+
+    <ul>
+        <!-- <li> -->
+            <!-- <p>video</p> -->
+            <!-- <iframe id="video_clip" width="424" height="238" frameborder="0" -->
+            <!-- allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" -->
+            <!-- allowfullscreen></iframe> -->
+        <!-- </li> -->
+
+        <li>
+            <p>0</p>
+            <img class="img_clip_preview" id="0">
+        </li>
+
+        <li>
+            <p>1</p>
+            <img class="img_clip_preview" id="1">
+        </li>
+        <li>
+            <p>2</p>
+            <img class="img_clip_preview" id="2">
+        </li>
+        <li>
+            <p>3</p>
+            <img class="img_clip_preview" id="3">
+        </li>
+        <li>
+            <p>default</p>
+            <img class="img_clip_preview" id="default">
+        </li>
+
+        <li>
+            <p>mq1</p>
+            <img class="img_clip_preview" id="mq1">
+        </li>
+        <li>
+            <p>mqdefault</p>
+            <img class="img_clip_preview" id="mq2">
+        </li>
+        <li>
+            <p>mq3</p>
+            <img class="img_clip_preview" id="mq3">
+        </li>
+        <li>
+            <p>mqdefault</p>
+            <img class="img_clip_preview" id="mqdefault">
+        </li>
+
+        <li>
+            <p>hq1</p>
+            <img class="img_clip_preview" id="hq1">
+        </li>
+        <li>
+            <p>hq2</p>
+            <img class="img_clip_preview" id="hq2">
+        </li>
+        <li>
+            <p>hq3</p>
+            <img class="img_clip_preview" id="hq3">
+        </li>
+        <li>
+            <p>hqdefault</p>
+            <img class="img_clip_preview" id="hqdefault">
+        </li>
+        <li>
+            <p>hq720</p>
+            <img class="img_clip_preview" id="hq720">
+        </li>
+
+        <li>
+            <p>sd1</p>
+            <img class="img_clip_preview" id="sd1">
+        </li>
+        <li>
+            <p>sd2</p>
+            <img class="img_clip_preview" id="sd2">
+        </li>
+        <li>
+            <p>sd3</p>
+            <img class="img_clip_preview" id="sd3">
+        </li>
+        <li>
+            <p>sddefault</p>
+            <img class="img_clip_preview" id="sddefault">
+        </li>
+
+        <li>
+            <p>maxresdefault</p>
+            <img class="img_clip_preview" id="maxresdefault">
+        </li>
+    </ul>
+</body>
+
+</html>

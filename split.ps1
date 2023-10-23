@@ -1,5 +1,11 @@
-﻿$include = @("*.mkv", "*.mp4")
-$outputFormat = "m4a"
+﻿$include = @("*.mkv", "*.mp4", "*.m4a", "*.webm", "*.ogg")
+$formats = @{
+        ".mkv" = "m4a" 
+        ".mp4" = "m4a" 
+        ".m4a" = "m4a" 
+        ".webm" = "ogg" 
+        ".ogg" = "ogg"
+        }
 
 Import-Module -Name $PSScriptRoot\util
 Import-Module -Name $PSScriptRoot\ffmpeg
@@ -159,12 +165,13 @@ function Split-Audio
     process {
 
         $targetPath = Get-OutputDir $Source
+        $targetExt = $formats[$Source.Extension]
         $tasks = @()
 
         for ($index = 0; $index -lt $TrackList.count; $index++) {
             $track = $TrackList[$index]
-            $nextTrack = $TrackList[$index + 1]
-            $targetFile = "{0:d2} - $( Get-NormalizedFilename $track.title ).$outputFormat" -f $track.index
+            $nextTrack = $TrackList[$index + 1]           
+            $targetFile = "{0:d2} - $( Get-NormalizedFilename $track.title ).$targetExt" -f $track.index
             $target = Join-Path $targetPath $targetFile
 
             $tasks += @{
@@ -193,7 +200,8 @@ function Split-Audio
 
             Import-Module -Name $using:PSScriptRoot\ffmpeg
             Convert-Audio -Source $_.source -Target $_.target -Metadata $_.metadata `
-                      -Options "$( $_.interval ) -vn -c:a copy"
+                -Options "$( $_.interval ) -vn -c:a copy"
+                      # -Options "$( $_.interval ) -vn -c:a aac"
         }
     }
 }
@@ -207,7 +215,7 @@ function Process-File()
         Write-Output "Source: $Source"
 
         $config_path = Join-Path $Source.Directory "tracks.ini"
-        if (-not(Test-Path -Path $config_path))
+        if (-not(Test-Path -Path $config_path) -or -not(Confirm-Proceed("Found tracks.ini file. Proceed with it?")))
         {
             $config_path = Get-Item -Path "$PSScriptRoot\default-tracks.ini"
         }
@@ -227,7 +235,7 @@ function Process-File()
         if ($track_list.count -gt 0)
         {
             Write-Output $track_list | Format-Table
-            Confirm-Proceed "Proceed with this track list?"
+            Confirm-ProceedOrExit "Proceed with the tracks?"
         }
         else
         {
@@ -244,11 +252,15 @@ function Process-File()
                 TotalDisks = $config.defaults.total_disks
             }
             #        Write-Output $track_list | Format-Table
-            #        Confirm-Proceed "No track list data. Proceed with single track?"
+            #        Confirm-ProceedOrExit "No track list data. Proceed with single track?"
         }
 
         Split-Audio -Source $Source -Config $config -TrackList $track_list
-        Save-Image -Source $Source -Config $config
+        
+        if ($config.cover)
+        {
+            Save-Image -Source $Source -Config $config
+        }
     }
 }
 

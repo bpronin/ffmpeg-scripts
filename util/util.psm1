@@ -105,13 +105,23 @@ function Confirm-Proceed
     )
 
     $input = (Read-Host "$message (y/n)").ToLower()
-    if ($input -and -not $input.StartsWith("y"))
+    return -not $input -or $input.StartsWith("y")
+}
+
+function Confirm-ProceedOrExit
+{
+    param (
+        [String]$message
+    )
+
+    if (-not (Confirm-Proceed($message)))
     {
         exit
     }
 }
 
 Export-ModuleMember -Function Confirm-Proceed
+Export-ModuleMember -Function Confirm-ProceedOrExit
 Export-ModuleMember -Function Get-Capitalized
 Export-ModuleMember -Function Set-ConsoleEncoding
 Export-ModuleMember -Function Set-Extension
