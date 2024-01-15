@@ -16,9 +16,9 @@
             "name": "m4b",
             "type": "PowerShell",
             "request": "launch",
-            "script": ".\\m4b-join.ps1",
+            "script": ".\\convert-m4b.ps1",
             "cwd": "${cwd}",
-            "args": ["-InputPath", "\"c:\\Temp\\dar \""]
+            "args": ["-InputPath", "\"c:\\Temp\\dar\""]
         },
     ]
 }
