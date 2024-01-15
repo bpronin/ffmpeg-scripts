@@ -258,3 +258,4 @@ $args | ForEach-Object {
 }
 
 Write-Output "Done"
+Read-Host

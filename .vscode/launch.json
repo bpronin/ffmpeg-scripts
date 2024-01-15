@@ -4,15 +4,21 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
-    
         {
-            "name": "PowerShell Launch Current File",
+            "name": "crop",
             "type": "PowerShell",
             "request": "launch",
-            "script": ".\\duration.ps1",
+            "script": ".\\crop.ps1",
             "cwd": "${cwd}",
-            "args": ["c:\\Temp\\test_book"]
+            "args": ["-InputFile", "\"d:\\Temp\\Music\\~Pending\\Mountain Lake Ambience ｜ Relaxing Nature Sounds： Birds Singing and Lapping Water with Soothing Wind.m4a\""]
+        },
+        {
+            "name": "m4b",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": ".\\m4b-join.ps1",
+            "cwd": "${cwd}",
+            "args": ["-InputPath", "\"c:\\Temp\\dar \""]
         },
     ]
 }
