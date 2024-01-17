@@ -13,10 +13,19 @@
             "args": ["-InputFile", "\"d:\\Temp\\Music\\~Pending\\Mountain Lake Ambience ｜ Relaxing Nature Sounds： Birds Singing and Lapping Water with Soothing Wind.m4a\""]
         },
         {
-            "name": "m4b",
+            "name": "book-m4b",
             "type": "PowerShell",
             "request": "launch",
-            "script": ".\\convert-m4b.ps1",
+            "script": ".\\book-m4b.ps1",
+            "cwd": "${cwd}",
+            "args": ["-InputPath", "\"c:\\Temp\\Kamera_obskura\""]
+        },
+        ,
+        {
+            "name": "book-mp3",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": ".\\book-mp3.ps1",
             "cwd": "${cwd}",
             "args": ["-InputPath", "\"c:\\Temp\\Kamera_obskura\""]
         },

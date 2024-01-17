@@ -4,9 +4,6 @@ param(
     [System.IO.FileInfo] $FfmpegHome = "c:\opt\ffmpeg\bin"
 )
 
-$UtilsModule = ".\lib\util.psm1"
-Import-Module $UtilsModule
-
 function GetFileMetadata {
     param (
         [System.IO.FileInfo] $InputFile
@@ -52,26 +49,15 @@ function GetOutputFile {
     return "$Artist - $Album"
 }
 
-<# Script entry point #>
-$OutputPath = "$InputPath\~out"
-New-Item -Path $OutputPath -ItemType Directory -Force
+<############# Script entry point #################>
 
-#region Convert
-
-Get-ChildItem -Path "$InputPath\*" -Include "*.mp3" | Foreach-Object -Parallel {
-    Write-Host "Converting $_ ..."    
-    $OutputFile = "$using:OutputPath\$($_.BaseName).m4a"
-    Invoke-Expression "$using:FfmpegHome\ffmpeg -i $_ -vn -c:a aac -q:a 2 -y -loglevel error $OutputFile"   
-} -ThrottleLimit 8
-
-#endregion
 #region Metadata
 
 Write-Host "Redaing metadata..."
 
 $Chapters = @()
 $ChapterStart = 0
-Get-ChildItem -Path "$OutputPath\*" -Include "*.m4a" | Foreach-Object {
+Get-ChildItem -Path "$InputPath\*" -Include "*.mp3" | Foreach-Object {
     $Metadata = GetFileMetadata -InputFile $_
     $Stream = $Metadata.streams[0]
     $ChapterEnd = $ChapterStart + $Stream.duration_ts    
@@ -112,7 +98,10 @@ $Chapters | Foreach-Object {
         "END=$($_.end)"
         "title=$Title"    
     ) 
-}   
+}
+    
+$OutputPath = "$InputPath\~out"
+New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
 
 $MetadataFile = "$OutputPath\~metadata.txt"
 Out-File -FilePath $MetadataFile -InputObject $Metadata
@@ -124,7 +113,7 @@ Out-File -FilePath $ListFile -InputObject $FileList
 
 Write-Host "Joining chapters..."
 
-$OutputFile = "`"$OutputPath\$(GetOutputFile $Chapters[0]).m4b`""
+$OutputFile = "`"$OutputPath\$(GetOutputFile $Chapters[0]).mp3`""
 Invoke-Expression "$FfmpegHome\ffmpeg -hide_banner -f concat -safe 0 -i $ListFile -i $MetadataFile -map_metadata 1 -c copy -y $OutputFile"
 
 Write-Host "Done" -ForegroundColor DarkGreen
