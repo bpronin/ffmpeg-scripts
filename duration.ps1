@@ -1,4 +1,4 @@
-Import-Module -Name $PSScriptRoot\util
+Import-Module .\lib\util.psm1
 
 function ProcessFile {
     param(

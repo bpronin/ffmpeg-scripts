@@ -1,4 +1,4 @@
-Import-Module -Name $PSScriptRoot\ffmpeg
+Import-Module .\lib\ffmpeg.psm1
 
 $args | Convert-AllAudio -Include @("*.flac", "*.mkv", "*.mp4", "*.m4a") `
                          -OutputFormat "ac3" `

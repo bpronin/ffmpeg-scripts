@@ -3,7 +3,7 @@ param(
     [System.IO.FileInfo] $InputFile
 )
 
-Import-Module -Name $PSScriptRoot\lib\util
+Import-Module .\lib\util.psm1
 
 $FFmpeg = "C:\Opt\ffmpeg\bin\ffmpeg.exe"
 $Start = Read-HostDefault -Prompt "Start" -DefaultValue "00:00:00"

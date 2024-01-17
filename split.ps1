@@ -7,8 +7,8 @@ $formats = @{
     ".ogg"  = "ogg"
 }
 
-Import-Module -Name $PSScriptRoot\util
-Import-Module -Name $PSScriptRoot\ffmpeg
+Import-Module .\lib\util.psm1
+Import-Module .\lib\ffmpeg.psm1
 
 class Track {
     [Int]$Index
@@ -248,7 +248,7 @@ $args | ForEach-Object {
     Write-Output "Path: $path"
 
     if ($path.PSIsContainer) {
-        Get-ChildItem –Path $path -Recurse -Include $include | Foreach-Object {
+        Get-ChildItem -Path $path -Recurse -Include $include | Foreach-Object {
             Split-File -source $_
         }
     }

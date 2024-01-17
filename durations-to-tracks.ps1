@@ -3,7 +3,7 @@
     [string]$i
 )
 
-Import-Module -Name $PSScriptRoot\util
+Import-Module .\lib\util.psm1
 
 function Read-Time
 {
