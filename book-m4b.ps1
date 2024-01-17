@@ -49,7 +49,7 @@ function GetOutputFile {
         $Chapter.tags.artist
     }       
 
-    return "$Artist - $Album"
+    return "`"$Artist - $Album`""
 }
 
 <############## Script entry point ################>
@@ -57,17 +57,17 @@ function GetOutputFile {
 $OutputPath = "$InputPath\~out"
 New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
 
-#region Convert
+# Convert audio
 
 Get-ChildItem -Path "$InputPath\*" -Include "*.mp3" | Foreach-Object -Parallel {
     Write-Host "Converting $_ ..."    
+    
     $OutputFile = "$using:OutputPath\$($_.BaseName).m4a"
     # Invoke-Expression "$using:FfmpegHome\ffmpeg -i $_ -vn -c:a aac -q:a 2 -y -loglevel error $OutputFile"   
-    Invoke-Expression "$using:FfmpegHome\ffmpeg -i $_ -vn -c:a aac -b:a 64k -y -loglevel error $OutputFile"   
+    Invoke-Expression "$using:FfmpegHome\ffmpeg -i $_ -c:v copy -c:a aac -b:a 64k -y -loglevel error $OutputFile"  
 }
 
-#endregion
-#region Metadata
+# Collect metadata
 
 Write-Host "Redaing metadata..."
 
@@ -119,14 +119,16 @@ $Chapters | Foreach-Object {
 $MetadataFile = "$OutputPath\~metadata.txt"
 Out-File -FilePath $MetadataFile -InputObject $Metadata
 
-$ListFile = "$OutputPath\~files.txt"
-Out-File -FilePath $ListFile -InputObject $FileList
+$FileListFile = "$OutputPath\~files.txt"
+Out-File -FilePath $FileListFile -InputObject $FileList
 
-#endregion
+$CoverFile = "$OutputPath\~cover.jpeg"
+Invoke-Expression "$FfmpegHome\ffmpeg -i $($Chapters[0].file) -c:v copy -an -y -loglevel error $CoverFile" 
+
+### Join files, chapters add metadata and cover image ###
 
 Write-Host "Joining chapters..."
-
-$OutputFile = "`"$OutputPath\$(GetOutputFile $Chapters[0]).m4b`""
-Invoke-Expression "$FfmpegHome\ffmpeg -hide_banner -f concat -safe 0 -i $ListFile -i $MetadataFile -map_metadata 1 -c copy -y $OutputFile"
+$OutputFile = "$OutputPath\$(GetOutputFile $Chapters[0]).m4b"
+Invoke-Expression "$FfmpegHome\ffmpeg -hide_banner -f concat -safe 0 -i $FileListFile -i $CoverFile -i $MetadataFile -map 0 -map 1 -map_metadata 1 -c copy -vn -y $OutputFile"
 
 Write-Host "Done" -ForegroundColor DarkGreen

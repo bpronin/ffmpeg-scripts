@@ -1,0 +1,1 @@
+C:\opt\ffmpeg\bin\ffmpeg.exe -i "c:\Temp\Kamera_obskura\Kamera_obskura_0001.mp3" -an -vcodec copy "c:\Temp\Kamera_obskura\cover.jpg"
