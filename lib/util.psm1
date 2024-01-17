@@ -5,12 +5,12 @@ function Set-ConsoleEncoding {
     [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding($encoding)
 }
 
-function Set-Extension {
+function ChangeExtension {
     param (
-        [System.IO.FileInfo]$file,
-        [String]$extension
+        [System.IO.FileInfo]$File,
+        [String]$Extension
     )
-    return Join-Path $file.Directory "$( $file.BaseName )$extension"
+    return Join-Path $File.Directory "$( $File.BaseName ).$Extension"
 }
 
 function Get-NormalizedFilename {
@@ -21,7 +21,7 @@ function Get-NormalizedFilename {
     return ((($name -replace "[\\/:|<>｜：]", "¦") -replace "[*]", "·") -replace "[?]", "$") -replace "[\`"]", "'"
 }
 
-function Confirm-Proceed {
+function ConfirmProceed {
     param (
         [String]$Prompt
     )
@@ -30,12 +30,12 @@ function Confirm-Proceed {
     return -not $Value -or $Value.StartsWith("y")
 }
 
-function Confirm-ProceedOrExit {
+function ConfirmProceedOrExit {
     param (
-        [String]$message
+        [String]$Message
     )
 
-    if (-not (Confirm-Proceed($message))) {
+    if (-not (ConfirmProceed($Message))) {
         exit
     }
 }
@@ -52,10 +52,10 @@ function Read-HostDefault {
     }
 }
 
-Export-ModuleMember -Function Confirm-Proceed
-Export-ModuleMember -Function Confirm-ProceedOrExit
+Export-ModuleMember -Function ConfirmProceed
+Export-ModuleMember -Function ConfirmProceedOrExit
 Export-ModuleMember -Function Get-Capitalized
 Export-ModuleMember -Function Set-ConsoleEncoding
-Export-ModuleMember -Function Set-Extension
+Export-ModuleMember -Function ChangeExtension
 Export-ModuleMember -Function Get-NormalizedFilename
 Export-ModuleMember -Function Read-HostDefault

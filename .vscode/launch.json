@@ -18,7 +18,7 @@
             "request": "launch",
             "script": ".\\convert-m4b.ps1",
             "cwd": "${cwd}",
-            "args": ["-InputPath", "\"c:\\Temp\\dar\""]
+            "args": ["-InputPath", "\"c:\\Temp\\Kamera_obskura\""]
         },
     ]
 }
