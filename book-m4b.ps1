@@ -14,7 +14,7 @@ function GetFileMetadata {
     
     # "$FfmpegHome\ffprobe -i $InputFile -show_entries format=duration -sexagesimal -v quiet -of csv=`"p=0`"" | Invoke-Expression
     
-    return Invoke-Expression "$FfmpegHome\ffprobe -v quiet -show_streams -show_entries stream_tags:format_tags -of json $InputFile" 
+    return Invoke-Expression "$FfmpegHome\ffprobe -v quiet -show_streams -show_entries stream_tags:format_tags -of json `"$InputFile`"" 
     | ConvertFrom-Json    
 }
 
@@ -49,7 +49,7 @@ function GetOutputFile {
         $Chapter.tags.artist
     }       
 
-    return "`"$Artist - $Album`""
+    return NormalizeFilename "$Artist - $Album"
 }
 
 <############## Script entry point ################>
@@ -60,20 +60,21 @@ New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
 # Convert audio
 
 Get-ChildItem -Path "$InputPath\*" -Include "*.mp3" | Foreach-Object -Parallel {
-    Write-Host "Converting $_ ..."    
+    Write-Host "Converting $_."    
+    # Write-Progress -Activity "Converting" -Status "$_" -PercentComplete 0
     
     $OutputFile = "$using:OutputPath\$($_.BaseName).m4a"
-    # Invoke-Expression "$using:FfmpegHome\ffmpeg -i $_ -vn -c:a aac -q:a 2 -y -loglevel error $OutputFile"   
-    Invoke-Expression "$using:FfmpegHome\ffmpeg -i $_ -c:v copy -c:a aac -b:a 64k -y -loglevel error $OutputFile"  
+    # Invoke-Expression "$using:FfmpegHome\ffmpeg -i $_ -vn -c:a aac -b:a 64k -y -loglevel error $OutputFile"  
+    Invoke-Expression "$using:FfmpegHome\ffmpeg -i `"$_`" -c:v copy -c:a aac -b:a 64k -y -loglevel error `"$OutputFile`""  
 }
 
 # Collect metadata
 
-Write-Host "Redaing metadata..."
+Write-Host "Redaing metadata."
 
 $Chapters = @()
 $ChapterStart = 0
-Get-ChildItem -Path "$OutputPath\*" -Include "*.m4a" | Foreach-Object {
+Get-ChildItem -Path "$OutputPath\*" -Include "*.m4a" | Sort-Object -Property Name | Foreach-Object {
     $Metadata = GetFileMetadata -InputFile $_
     $Stream = $Metadata.streams[0]
     $ChapterEnd = $ChapterStart + $Stream.duration_ts    
@@ -105,7 +106,7 @@ $FileList = @()
 
 $Chapters | Foreach-Object {
     $Title = GetChapterTitle -Chapter $_
-    $FileList += "file '$($_.file.FullName)'"
+    $FileList += "file '$($_.file)'"
  
     $Metadata += @(
         "[CHAPTER]"
@@ -122,13 +123,20 @@ Out-File -FilePath $MetadataFile -InputObject $Metadata
 $FileListFile = "$OutputPath\~files.txt"
 Out-File -FilePath $FileListFile -InputObject $FileList
 
+Write-Host "Extracting album art image."
 $CoverFile = "$OutputPath\~cover.jpeg"
-Invoke-Expression "$FfmpegHome\ffmpeg -i $($Chapters[0].file) -c:v copy -an -y -loglevel error $CoverFile" 
+Invoke-Expression "$FfmpegHome\ffmpeg -i `"$($Chapters[0].file)`" -c:v copy -an -y -loglevel error `"$CoverFile`"" 
 
 ### Join files, chapters add metadata and cover image ###
 
-Write-Host "Joining chapters..."
 $OutputFile = "$OutputPath\$(GetOutputFile $Chapters[0]).m4b"
-Invoke-Expression "$FfmpegHome\ffmpeg -hide_banner -f concat -safe 0 -i $FileListFile -i $CoverFile -i $MetadataFile -map 0 -map 1 -map_metadata 1 -c copy -vn -y $OutputFile"
+Write-Host "Joining chapters into $OutputFile."
+# Invoke-Expression "$FfmpegHome\ffmpeg -hide_banner -f concat -safe 0 -i `"$FileListFile`" -i `"$CoverFile`" -i `"$MetadataFile`" -map 0 -map 1 -map_metadata 1 -c copy -vn -y `"$OutputFile`""
+Invoke-Expression "$FfmpegHome\ffmpeg -hide_banner -f concat -safe 0 -i `"$FileListFile`" -i `"$MetadataFile`" -map_metadata 1 -c copy -vn -y `"$OutputFile`""
 
-Write-Host "Done" -ForegroundColor DarkGreen
+if ($Error) {
+    Read-Host 
+}
+else {
+    Write-Host "Done" -ForegroundColor DarkGreen
+}

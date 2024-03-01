@@ -18,16 +18,23 @@
             "request": "launch",
             "script": ".\\book-m4b.ps1",
             "cwd": "${cwd}",
-            "args": ["-InputPath", "\"c:\\Temp\\Kamera_obskura\""]
+            "args": ["-InputPath", "\"c:\\Temp\\book\""]
         },
-        ,
         {
-            "name": "book-mp3",
+            "name": "compress-cover",
             "type": "PowerShell",
             "request": "launch",
-            "script": ".\\book-mp3.ps1",
+            "script": ".\\compress-cover.ps1",
             "cwd": "${cwd}",
-            "args": ["-InputPath", "\"c:\\Temp\\Kamera_obskura\""]
+            "args": ["d:\\Temp\\Music\\~Pending"]
         },
+        {
+            "name": "split",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": ".\\split.ps1",
+            "cwd": "${cwd}",
+            "args": ["c:\\Temp\\test.m4a"]
+        }
     ]
 }

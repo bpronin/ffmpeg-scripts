@@ -1,42 +1,49 @@
 function Set-ConsoleEncoding {
     param (
-        [String]$encoding
+        [String]$Encoding
     )
-    [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding($encoding)
+    process {
+        [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding($Encoding)
+    }
 }
 
-function ChangeExtension {
+function Rename-FileExtension {
     param (
         [System.IO.FileInfo]$File,
         [String]$Extension
     )
-    return Join-Path $File.Directory "$( $File.BaseName ).$Extension"
+    process {
+        return Join-Path $File.Directory "$( $File.BaseName ).$Extension"
+    }
 }
 
 function Get-NormalizedFilename {
     param (
-        [String]$name
+        [String]$Filename
     )
-
-    return ((($name -replace "[\\/:|<>｜：]", "¦") -replace "[*]", "·") -replace "[?]", "$") -replace "[\`"]", "'"
+    process {
+        return ((($Filename -replace "[\\/:|<>｜：]", "¦") -replace "[*]", "·") -replace "[?]", "$") -replace "[\`"]", "'"
+    }
 }
 
-function ConfirmProceed {
+function Confirm-Proceed {
     param (
         [String]$Prompt
     )
-
-    $Value = (Read-Host "$Prompt (y/n)").ToLower()
-    return -not $Value -or $Value.StartsWith("y")
+    process {
+        $Value = (Read-Host "$Prompt (y/n)").ToLower()
+        return -not $Value -or $Value.StartsWith("y")
+    }
 }
 
-function ConfirmProceedOrExit {
+function Confirm-ProceedOrExit {
     param (
         [String]$Message
     )
-
-    if (-not (ConfirmProceed($Message))) {
-        exit
+    process {
+        if (-not (Confirm-Proceed($Message))) {
+            exit
+        }
     }
 }
 function Read-HostDefault {
@@ -44,18 +51,20 @@ function Read-HostDefault {
         [String]$Prompt,
         $DefaultValue
     )
-    if ($Value = Read-Host "$Prompt [$DefaultValue]") { 
-        return $Value 
-    }
-    else {
-        return $DefaultValue
+    process {
+        if ($Value = Read-Host "$Prompt [$DefaultValue]") { 
+            return $Value 
+        }
+        else {
+            return $DefaultValue
+        }
     }
 }
 
-Export-ModuleMember -Function ConfirmProceed
-Export-ModuleMember -Function ConfirmProceedOrExit
+Export-ModuleMember -Function Confirm-Proceed
+Export-ModuleMember -Function Confirm-ProceedOrExit
 Export-ModuleMember -Function Get-Capitalized
 Export-ModuleMember -Function Set-ConsoleEncoding
-Export-ModuleMember -Function ChangeExtension
+Export-ModuleMember -Function Rename-FileExtension
 Export-ModuleMember -Function Get-NormalizedFilename
 Export-ModuleMember -Function Read-HostDefault

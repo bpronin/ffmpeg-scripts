@@ -1,1 +1,10 @@
-C:\opt\ffmpeg\bin\ffmpeg.exe -i "c:\Temp\Kamera_obskura\Kamera_obskura_0001.mp3" -an -vcodec copy "c:\Temp\Kamera_obskura\cover.jpg"
+# $Format = "{artist} - {title}    - {time}"
+$Format = "{artist} - '{title}' - {time}"
+$Format = $Format`
+    -replace "{artist}","(?<artist>.+)"`
+    -replace "{title}","(?<title>.+)"`
+    -replace "{time}","(?<time>[\d:]+)"`
+    -replace "{index}","(?<index>\d+)"`
+    -replace "(\s+)","\s+"
+
+$Format
