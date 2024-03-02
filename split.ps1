@@ -31,7 +31,7 @@ function Read-Time {
         [String]$String
     )
     process {
-        if (-not $String){
+        if (-not $String) {
             return $Null
         }
 
@@ -54,7 +54,7 @@ function Get-TrackRegex {
             -replace "{start}", "(?<start>[\d:]+\.?\d+)"`
             -replace "{duration}", "(?<duration>[\d:]+\.?\d+)"`
             -replace "{index}", "(?<index>\d+)"`
-            -replace "(\s+)", "\s+"
+            -replace "(\s+)", "\s+"  
     }
 }
 
@@ -103,6 +103,37 @@ function Read-Track {
         }
     }
 }
+function Read-TrackList {
+    param(
+        [System.IO.FileInfo] $ConfigPath
+    )
+    process {
+        if (Test-Path $ConfigPath) {
+            Write-Host "Tracks file: $ConfigPath"
+            $Config = Get-Content $ConfigPath
+        }
+        else {            
+            Write-Host "Tracks file not found. Proceeding with single track."
+            $Config = @("{start} {title}", "00:00 $($Source.BaseName)")
+        }       
+        
+        $Format = Get-TrackRegex $Config[0]
+        $TrackStart = 0
+        $TrackList = @()
+        for ($i = 1; $i -lt $Config.Count; $i++) {
+            $Track = Read-Track -Index $i -String $Config[$i] -Regex $Format
+            
+            if ($Track.Duration) {
+                $Track.Start = $TrackStart
+                $TrackStart += $Track.Duration
+            }
+            
+            $TrackList += $Track
+        }       
+        
+        return $TrackList
+    }
+}
 
 function Get-OutputDir {
     param (
@@ -114,7 +145,7 @@ function Get-OutputDir {
     }
 }
 
-function Split-Audio {
+function Invoke-Ffmpeg {
     param (
         [System.IO.FileInfo] $Source,
         [Track[]] $TrackList
@@ -136,8 +167,6 @@ function Split-Audio {
             $Track = $_.Track
             $TargetFile = "{0:d2} - $( Get-NormalizedFilename $Track.Title ).$using:TargetExt" -f $Track.Index
             $Target = Join-Path $using:TargetPath $TargetFile
-
-            Write-Host "Extracting track: $Target"
 
             $Command = "$using:FFmpeg -loglevel error -y"
             $Command += " -i `"$using:Source`""
@@ -165,6 +194,7 @@ function Split-Audio {
             $Command += " -vn -c:a copy"
             $Command += " `"$Target`""
             
+            Write-Host "Extracting track: $Target"
             # $Command
             Invoke-Expression $Command            
         }
@@ -176,29 +206,15 @@ function Convert-File {
         [System.IO.FileInfo] $Source
     )
     process {
-        Write-Output "Source: $Source"
+        Write-Host "Source file: $Source"
         
-        $ConfigPath = Rename-FileExtension -File $Source -Extension "txt"
-        if (Test-Path $ConfigPath) {
-            Write-Output "Tracks: $ConfigPath"
-            $Config = Get-Content $ConfigPath
-        }
-        else {            
-            Write-Output "Tracks file not found. Proceeding with single track."
-            $Config = @("{start} {title}", "00:00 $($Source.BaseName)")
-        }       
-        
-        $Format = Get-TrackRegex $Config[0]
-        $TrackList = @()
-        for ($i = 1; $i -lt $Config.Count; $i++) {
-            $Track = Read-Track -Index $i -String $Config[$i] -Regex $Format
-            $TrackList += $Track        
-        }       
+        $Config = Rename-FileExtension -File $Source -Extension "txt"
+        $TrackList = Read-TrackList $Config
 
-        Write-Output $TrackList | Format-Table
+        $TrackList | Format-Table
+
         Confirm-ProceedOrExit "Proceed with these tracks?"
-
-        Split-Audio -Source $Source -TrackList $TrackList
+        Invoke-Ffmpeg -Source $Source -TrackList $TrackList
     }
 }
 
@@ -208,7 +224,7 @@ Set-ConsoleEncoding "windows-1251"
 
 $Args | ForEach-Object {
     $Path = Get-Item -Path $_
-    Write-Output "Path: $Path"
+    Write-Host "Source path: $Path"
 
     if ($Path.PSIsContainer) {
         Get-ChildItem -Path $Path -Recurse -IncludeFiles $IncludeFiles | Foreach-Object {
