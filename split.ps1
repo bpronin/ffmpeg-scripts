@@ -194,7 +194,7 @@ function Invoke-Ffmpeg {
             $Command += " -vn -c:a copy"
             $Command += " `"$Target`""
             
-            Write-Host "Extracting track: $Target"
+            Write-Host "Extracting: $Target"
             # $Command
             Invoke-Expression $Command            
         }

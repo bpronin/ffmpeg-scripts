@@ -1,61 +1,44 @@
-$FfmpegHome = "c:\opt\ffmpeg\bin"
-$ImageMagickHome = "c:\`"Program Files`"\ImageMagick-7.1.1-Q16-HDRI" 
+$ErrorActionPreference = "Stop"
+# $PSStyle.Progress.View = 'Classic'
 
+$FfmpegHome = "c:\opt\ffmpeg\bin"
+$ImageMagickHome = "c:\opt\imagic" 
 $Include = @("*.mp3", "*.m4a", "*.ogg")
 
-# --- SCRIPT ENTRY POINT
+Import-Module .\lib\util.psm1
 
 function ProcessFile {
     param (
         [System.IO.FileInfo]$InputFile
     )
-    Write-Output "$InputFile"  
+    process {
+        # $InputFile
+
+        $CoverFile = "$($InputFile.Directory)\~cover.jpg"
+        Invoke-Expression "$FfmpegHome\ffmpeg -i `"$InputFile`" -c:v copy -an -y -loglevel error `"$CoverFile`""      
     
-    $CoverFile = "$($InputFile.Directory)\~cover.jpg"
+        if (Test-Path $CoverFile) {
+            Invoke-Expression "$ImageMagickHome\magick mogrify -resize 400x400 -quality 80 -format jpg `"$CoverFile`""    
 
-    Invoke-Expression "$FfmpegHome\ffmpeg -i `"$InputFile`" -c:v copy -an -y -loglevel error `"$CoverFile`""      
-    
-    if (Test-Path $CoverFile) {
-        $TempFile1 = "$($InputFile.Directory)\~temp$($InputFile.Extension)"
-        $TempFile2 = "$($InputFile.Directory)\~~temp$($InputFile.Extension)"
+            $StrippedFile = "$($InputFile.Directory)\~temp$($InputFile.Extension)"
+            Invoke-Expression "$FfmpegHome\ffmpeg -i `"$InputFile`" -c copy -vn -y -loglevel error `"$StrippedFile`""
 
-        Invoke-Expression "$ImageMagickHome\magick mogrify -resize 400x400 -quality 80 -format jpg `"$CoverFile`""    
-        Invoke-Expression "$FfmpegHome\ffmpeg -i `"$InputFile`" -c copy -vn -y -loglevel error `"$TempFile1`""
-        if ($Error) { 
-            $Error
-            Exit 
+            $ResizedFile = "$($InputFile.Directory)\~~temp$($InputFile.Extension)"
+            Invoke-Expression "$FfmpegHome\ffmpeg -i `"$StrippedFile`" -i `"$CoverFile`" -c copy -map 0 -map 1 -y -loglevel error `"$ResizedFile`""
+
+            Remove-Item -Path $CoverFile
+            Remove-Item -Path $StrippedFile
+            Remove-Item -Path $InputFile       
+            Rename-Item -Path $ResizedFile -NewName $InputFile        
         }
-        Invoke-Expression "$FfmpegHome\ffmpeg -i `"$TempFile1`" -i `"$CoverFile`" -c copy -map 0 -map 1 -y -loglevel error `"$TempFile2`""
-        if ($Error) { 
-            $Error
-            Exit 
-        }
-        # Invoke-Expression "$FfmpegHome\ffmpeg -i `"$InputFile`" -i `"$CoverFile`" -c copy -map 0 -map 1 -y -loglevel error `"$TempFile`""
-        
-
-        Remove-Item -Path $CoverFile
-        Remove-Item -Path $TempFile1
-        Remove-Item -Path $InputFile       
-        Rename-Item -Path $TempFile2 -NewName $InputFile        
     }
 }
-function IterateFiles {
-    param (
-        $Path
-    )
 
-    $Item = Get-Item -Path $Path
-    if ($Item.PSIsContainer) {
-        Get-ChildItem -Path $Path -Recurse -Include $Include | Foreach-Object {
-            IterateFiles $_
-        }
-    }
-    else {
-        ProcessFile -InputFile $Item
-    }    
-}
+# --- SCRIPT ENTRY POINT
 
-
-$args | ForEach-Object {
-    IterateFiles -Path $_
+$Items = Get-FilesCollection -Paths @Args -Include $Include
+$n = $Items.Count
+for ($i = 0; $i -lt $n; $i++) {
+    ProcessFile $Items[$i]
+    Write-Progress -Activity "Processing" -Status "$i of $n" -PercentComplete (($i / $n) * 100)
 }

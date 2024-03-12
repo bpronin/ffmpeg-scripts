@@ -61,10 +61,35 @@ function Read-HostDefault {
     }
 }
 
+function Get-FilesCollection {
+    param (
+        [Parameter(Mandatory)]
+        $Paths,
+        $Include
+    )
+    process {
+        $Items = @()
+        
+        $Paths | ForEach-Object {
+            $Path = Get-Item -Path $_
+            if ($Path.PSIsContainer) {
+                Get-ChildItem -Path $Path -Recurse -Include $Include | Foreach-Object {
+                    $Items += $_
+                }
+            }
+            else {
+                $Items += $Path
+            } 
+        }
+        return $Items
+    }
+}
+
 Export-ModuleMember -Function Confirm-Proceed
 Export-ModuleMember -Function Confirm-ProceedOrExit
 Export-ModuleMember -Function Get-Capitalized
-Export-ModuleMember -Function Set-ConsoleEncoding
-Export-ModuleMember -Function Rename-FileExtension
 Export-ModuleMember -Function Get-NormalizedFilename
+Export-ModuleMember -Function Get-FilesCollection
+Export-ModuleMember -Function Rename-FileExtension
 Export-ModuleMember -Function Read-HostDefault
+Export-ModuleMember -Function Set-ConsoleEncoding
