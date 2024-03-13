@@ -46,13 +46,17 @@ function Confirm-ProceedOrExit {
         }
     }
 }
+
 function Read-HostDefault {
     param (
         [String]$Prompt,
         $DefaultValue
     )
     process {
-        if ($Value = Read-Host "$Prompt [$DefaultValue]") { 
+        if ($DefaultValue) {
+            $DefaultPrompt = " [$DefaultValue]"
+        }
+        if ($Value = Read-Host "$Prompt$DefaultPrompt") { 
             return $Value 
         }
         else {
@@ -60,7 +64,7 @@ function Read-HostDefault {
         }
     }
 }
-
+   
 function Get-FilesCollection {
     param (
         [Parameter(Mandatory)]

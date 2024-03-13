@@ -1,11 +1,30 @@
 $ErrorActionPreference = "Stop"
 # $PSStyle.Progress.View = 'Classic'
 
-$FfmpegHome = "c:\opt\ffmpeg\bin"
-$ImageMagickHome = "c:\opt\imagic" 
-$Include = @("*.mp3", "*.m4a", "*.ogg")
+# $Include = @("*.mp3", "*.m4a", "*.ogg") 
+# m4a does not copy all metadata tags
+$Include = @("*.mp3")
 
 Import-Module .\lib\util.psm1
+
+function Invoke-Ffmpeg {
+    param (
+        [string]$Options
+    )
+    process {
+        Invoke-Expression "c:\opt\ffmpeg\bin\ffmpeg -y $Options"      
+        # Invoke-Expression "c:\opt\ffmpeg\bin\ffmpeg $Options"      
+    }
+}
+
+function Invoke-Imagick {
+    param (
+        [string]$Options
+    )
+    process {
+        Invoke-Expression "c:\opt\imagick\magick $Options"      
+    }
+}
 
 function ProcessFile {
     param (
@@ -15,30 +34,27 @@ function ProcessFile {
         # $InputFile
 
         $CoverFile = "$($InputFile.Directory)\~cover.jpg"
-        Invoke-Expression "$FfmpegHome\ffmpeg -i `"$InputFile`" -c:v copy -an -y -loglevel error `"$CoverFile`""      
+        Invoke-Ffmpeg "-i `"$InputFile`" -c:v copy -an -loglevel quiet `"$CoverFile`""      
     
         if (Test-Path $CoverFile) {
-            Invoke-Expression "$ImageMagickHome\magick mogrify -resize 400x400 -quality 80 -format jpg `"$CoverFile`""    
+            Invoke-Imagick "mogrify -resize 400x400 -quality 80 -format jpg `"$CoverFile`""    
 
-            $StrippedFile = "$($InputFile.Directory)\~temp$($InputFile.Extension)"
-            Invoke-Expression "$FfmpegHome\ffmpeg -i `"$InputFile`" -c copy -vn -y -loglevel error `"$StrippedFile`""
-
-            $ResizedFile = "$($InputFile.Directory)\~~temp$($InputFile.Extension)"
-            Invoke-Expression "$FfmpegHome\ffmpeg -i `"$StrippedFile`" -i `"$CoverFile`" -c copy -map 0 -map 1 -y -loglevel error `"$ResizedFile`""
+            $TempFile = "$($InputFile.Directory)\~temp$($InputFile.Extension)"
+            Invoke-Ffmpeg "-i `"$InputFile`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -loglevel error `"$TempFile`""
+            # Invoke-Ffmpeg "-i `"$InputFile`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -disposition:v attached_pic `"$TempFile`"" #for m4a
 
             Remove-Item -Path $CoverFile
-            Remove-Item -Path $StrippedFile
             Remove-Item -Path $InputFile       
-            Rename-Item -Path $ResizedFile -NewName $InputFile        
+            Rename-Item -Path $TempFile -NewName $InputFile        
         }
     }
 }
 
-# --- SCRIPT ENTRY POINT
+# --- SCRIPT ENTRY POINT ---
 
-$Items = Get-FilesCollection -Paths @Args -Include $Include
+$Items = Get-FilesCollection -Paths $args -Include $Include
 $n = $Items.Count
-for ($i = 0; $i -lt $n; $i++) {
-    ProcessFile $Items[$i]
+for ($i = 1; $i -le $n; $i++) {
+    ProcessFile $Items[$i - 1]
     Write-Progress -Activity "Processing" -Status "$i of $n" -PercentComplete (($i / $n) * 100)
 }
