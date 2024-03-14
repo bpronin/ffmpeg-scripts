@@ -9,11 +9,13 @@ function Set-ConsoleEncoding {
 
 function Rename-FileExtension {
     param (
+        [Parameter(Mandatory)]
         [System.IO.FileInfo]$File,
-        [String]$Extension
+        [String]$NewExtension = $File.Extension,
+        [String]$Prefix
     )
     process {
-        return Join-Path $File.Directory "$( $File.BaseName ).$Extension"
+        return Join-Path $File.Directory "$Prefix$( $File.BaseName ).$NewExtension"
     }
 }
 

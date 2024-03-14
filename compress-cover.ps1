@@ -1,5 +1,4 @@
 $ErrorActionPreference = "Stop"
-# $PSStyle.Progress.View = 'Classic'
 
 # $Include = @("*.mp3", "*.m4a", "*.ogg") 
 # m4a does not copy all metadata tags
@@ -33,13 +32,13 @@ function ProcessFile {
     process {
         # $InputFile
 
-        $CoverFile = "$($InputFile.Directory)\~cover.jpg"
+        $CoverFile = Rename-FileExtension -File $InputFile -NewExtension "jpg"
         Invoke-Ffmpeg "-i `"$InputFile`" -c:v copy -an -loglevel quiet `"$CoverFile`""      
     
         if (Test-Path $CoverFile) {
             Invoke-Imagick "mogrify -resize 400x400 -quality 80 -format jpg `"$CoverFile`""    
 
-            $TempFile = "$($InputFile.Directory)\~temp$($InputFile.Extension)"
+            $TempFile = Rename-FileExtension -File $InputFile -Prefix "~"
             Invoke-Ffmpeg "-i `"$InputFile`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -loglevel error `"$TempFile`""
             # Invoke-Ffmpeg "-i `"$InputFile`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -disposition:v attached_pic `"$TempFile`"" #for m4a
 
@@ -51,10 +50,13 @@ function ProcessFile {
 }
 
 # --- SCRIPT ENTRY POINT ---
+# $PSStyle.Progress.View = 'Classic'
 
 $Items = Get-FilesCollection -Paths $args -Include $Include
+$i = 1
 $n = $Items.Count
-for ($i = 1; $i -le $n; $i++) {
-    ProcessFile $Items[$i - 1]
-    Write-Progress -Activity "Processing" -Status "$i of $n" -PercentComplete (($i / $n) * 100)
+$Items | ForEach-Object {
+    ProcessFile $_
+    Write-Progress -Activity "Processing" -Status "($i of $n) $_" -PercentComplete (($i / $n) * 100) -CurrentOperation $_    
+    $i++
 }
