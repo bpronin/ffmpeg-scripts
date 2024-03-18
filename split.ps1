@@ -153,6 +153,10 @@ function Invoke-Ffmpeg {
     process {
         $TargetPath = Get-OutputDir $Source
         $TargetExt = $Formats[$Source.Extension]
+
+        $CoverFile = "$TargetPath\folder.jpg"
+        Write-Host "Extracting cover art: $CoverFile"
+        Invoke-Expression "$FFmpeg -loglevel error -y -i `"$Source`" -c:v copy -an `"$CoverFile`""  
         
         $Tasks = @()
         for ($i = 0; $i -lt $TrackList.Count; $i++) {
@@ -161,7 +165,7 @@ function Invoke-Ffmpeg {
                 NextTrack = $TrackList[$i + 1]
             }
         }
-
+            
         $Tasks | ForEach-Object -Parallel {
             Import-Module .\lib\util.psm1
             $Track = $_.Track
@@ -169,14 +173,14 @@ function Invoke-Ffmpeg {
             $Target = Join-Path $using:TargetPath $TargetFile
 
             $Command = "$using:FFmpeg -loglevel error -y"
-            $Command += " -i `"$using:Source`""
- 
+            $Command += " -i `"$using:Source`"" 
             $Command += " -ss $($Track.Start)"
             
             if ($_.NextTrack) {
                 $Command += " -to $( $_.NextTrack.Start )"
             } 
 
+            $Command += " -map_chapters -1"
             $Command += " -metadata track=`"$($Track.Index)`""
             $Command += " -metadata title=`"$($Track.Title)`""
             $Command += " -metadata artist=`"$($Track.Artist)`""
@@ -188,9 +192,7 @@ function Invoke-Ffmpeg {
             $Command += " -metadata album_artist=`"$($Track.AlbumArtist)`""
             $Command += " -metadata disc=`"$($Track.DiskNumber)`""
             $Command += " -metadata totaldiscs=`"$($Track.TotalDisks)`""
-
             $Command += " -metadata totalTracks=`"$($using:TrackList.Count)`""
- 
             $Command += " -vn -c:a copy"
             $Command += " `"$Target`""
             
