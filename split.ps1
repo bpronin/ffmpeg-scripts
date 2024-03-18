@@ -1,4 +1,5 @@
-﻿$IncludeFiles = @("*.mkv", "*.mp4", "*.m4a", "*.webm", "*.ogg")
+﻿$ErrorActionPreference = "Break"
+$IncludeFiles = @("*.mkv", "*.mp4", "*.m4a", "*.webm", "*.ogg")
 $Formats = @{
     ".mkv"  = "m4a" 
     ".mp4"  = "m4a" 
@@ -49,11 +50,11 @@ function Get-TrackRegex {
     )
     process {
         return $Format`
-            -replace "{artist}", "(?<artist>.+)"`
+            -replace "{artist}|{author}", "(?<artist>.+)"`
             -replace "{title}", "(?<title>.+)"`
-            -replace "{start}", "(?<start>[\d:]+\.?\d+)"`
+            -replace "{start}|{time}", "(?<start>[\d:]+\.?\d+)"`
             -replace "{duration}", "(?<duration>[\d:]+\.?\d+)"`
-            -replace "{index}", "(?<index>\d+)"`
+            -replace "{index}|{track}", "(?<index>\d+)"`
             -replace "(\s+)", "\s+"  
     }
 }
@@ -99,7 +100,7 @@ function Read-Track {
             }
         }
         else {
-            return $Null
+            throw "Invalid regex [$Regex] or track string [$String]"
         }
     }
 }
@@ -109,12 +110,11 @@ function Read-TrackList {
     )
     process {
         if (Test-Path $ConfigPath) {
-            Write-Host "Tracks file: $ConfigPath"
+            Write-Host "Tracks: $ConfigPath"
             $Config = Get-Content $ConfigPath
         }
         else {            
-            Write-Host "Tracks file not found. Proceeding with single track."
-            $Config = @("{start} {title}", "00:00 $($Source.BaseName)")
+            throw "Tracks file [$ConfigPath] not found."
         }       
         
         $Format = Get-TrackRegex $Config[0]
@@ -206,9 +206,9 @@ function Convert-File {
         [System.IO.FileInfo] $Source
     )
     process {
-        Write-Host "Source file: $Source"
+        Write-Host "Source: $Source"
         
-        $Config = Rename-FileExtension -File $Source -Extension "txt"
+        $Config = Rename-FileExtension -File $Source -NewExtension "txt"
         $TrackList = Read-TrackList $Config
 
         $TrackList | Format-Table
@@ -222,24 +222,6 @@ function Convert-File {
 
 Set-ConsoleEncoding "windows-1251"
 
-$Args | ForEach-Object {
-    $Path = Get-Item -Path $_
-    Write-Host "Source path: $Path"
-
-    if ($Path.PSIsContainer) {
-        Get-ChildItem -Path $Path -Recurse -IncludeFiles $IncludeFiles | Foreach-Object {
-            Convert-File -Source $_
-        }
-    }
-    else {
-        Convert-File -Source $Path        
-    }
-}
-
-if ($Error) {
-    Write-Host "Press a key."
-    Read-Host
-}
-else {
-    Write-Host "Done" -ForegroundColor DarkGreen
+Get-FilesCollection -Paths $args -Include $IncludeFiles | ForEach-Object {
+    Convert-File -Source $_
 }

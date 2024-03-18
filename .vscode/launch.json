@@ -34,7 +34,15 @@
             "request": "launch",
             "script": ".\\split.ps1",
             "cwd": "${cwd}",
-            "args": ["c:\\Temp\\test.m4a"]
+            "args": ["c:\\Temp\\test"]
+        },
+        {
+            "name": "split-mp4-chapters",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": ".\\split-mp4-chapters.ps1",
+            "cwd": "${cwd}",
+            "args": ["d:\\Temp\\Music\\~Pending\\test\\file.m4a"]
         }
     ]
 }

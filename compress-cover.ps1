@@ -1,9 +1,3 @@
-$ErrorActionPreference = "Stop"
-
-# $Include = @("*.mp3", "*.m4a", "*.ogg") 
-# m4a does not copy all metadata tags
-$Include = @("*.mp3")
-
 Import-Module .\lib\util.psm1
 
 function Invoke-Ffmpeg {
@@ -11,7 +5,8 @@ function Invoke-Ffmpeg {
         [string]$Options
     )
     process {
-        Invoke-Expression "c:\opt\ffmpeg\bin\ffmpeg -y $Options"      
+        # Start-Process -FilePath "c:\opt\ffmpeg\bin\ffmpeg" -ArgumentList "-y $Options" -NoNewWindow -Wait -PassThru
+        Invoke-Expression "c:\opt\ffmpeg\bin\ffmpeg -y $Options" | Out-Default # wait for completion  
         # Invoke-Expression "c:\opt\ffmpeg\bin\ffmpeg $Options"      
     }
 }
@@ -21,7 +16,8 @@ function Invoke-Imagick {
         [string]$Options
     )
     process {
-        Invoke-Expression "c:\opt\imagick\magick $Options"      
+        # Start-Process -FilePath "c:\opt\imagick\magick" -ArgumentList "$Options" -NoNewWindow -Wait -PassThru
+        Invoke-Expression "c:\opt\imagick\magick $Options" | Out-Default # wait for completion    
     }
 }
 
@@ -43,16 +39,22 @@ function ProcessFile {
             # Invoke-Ffmpeg "-i `"$InputFile`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -disposition:v attached_pic `"$TempFile`"" #for m4a
 
             Remove-Item -Path $CoverFile
-            Remove-Item -Path $InputFile       
-            Rename-Item -Path $TempFile -NewName $InputFile        
+            Move-Item -Path $TempFile -Destination $InputFile -Force        
         }
     }
 }
 
-# --- SCRIPT ENTRY POINT ---
+$ErrorActionPreference = "Break"
 # $PSStyle.Progress.View = 'Classic'
+# $Include = @("*.mp3", "*.m4a", "*.ogg") 
+# m4a does not copy all metadata tags
+$Include = @("*.mp3")
 
+# --- SCRIPT ENTRY POINT ---
+
+Write-Progress -Activity "Processing" -Status "Collecting ..."
 $Items = Get-FilesCollection -Paths $args -Include $Include
+
 $i = 1
 $n = $Items.Count
 $Items | ForEach-Object {
