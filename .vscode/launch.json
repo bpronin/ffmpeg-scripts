@@ -21,12 +21,19 @@
             "args": ["-InputPath", "\"c:\\Temp\\book\""]
         },
         {
+            "name": "compress-cover-test",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": ".\\compress-cover.ps1",
+            "cwd": "${cwd}",
+            "args": ["c:\\Temp\\test-convert"]
+        },        {
             "name": "compress-cover",
             "type": "PowerShell",
             "request": "launch",
             "script": ".\\compress-cover.ps1",
             "cwd": "${cwd}",
-            "args": ["d:\\Temp\\Music\\~Pending\\test"]
+            "args": ["D:\\Temp\\Music\\~Pending\\test"]
         },
         {
             "name": "split",

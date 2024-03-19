@@ -91,11 +91,34 @@ function Get-FilesCollection {
     }
 }
 
+function Invoke-NotFail {
+    param (
+        [scriptblock]$Block,
+        [int]$Attempts = 3,
+        [int]$Timeout = 100
+    )
+    process {
+        for ($i = 0; $i -lt $Attempts; $i++) {
+            try {
+                Invoke-Command $Block
+                return
+            }
+            catch {
+                Write-Debug "Attempt $($i+1) failed."
+                Write-Warning "$_ Trying again afret $Timeout ms ..."
+            }
+            Start-Sleep -Milliseconds $Timeout
+        }
+        throw "Give up trying"
+    }
+}
+
 Export-ModuleMember -Function Confirm-Proceed
 Export-ModuleMember -Function Confirm-ProceedOrExit
 Export-ModuleMember -Function Get-Capitalized
 Export-ModuleMember -Function Get-NormalizedFilename
 Export-ModuleMember -Function Get-FilesCollection
+Export-ModuleMember -Function Invoke-NotFail
 Export-ModuleMember -Function Rename-FileExtension
 Export-ModuleMember -Function Read-HostDefault
 Export-ModuleMember -Function Set-ConsoleEncoding

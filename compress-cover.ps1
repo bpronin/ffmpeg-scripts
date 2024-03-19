@@ -1,64 +1,50 @@
-Import-Module .\lib\util.psm1
-
-function Invoke-Ffmpeg {
-    param (
-        [string]$Options
-    )
-    process {
-        # Start-Process -FilePath "c:\opt\ffmpeg\bin\ffmpeg" -ArgumentList "-y $Options" -NoNewWindow -Wait -PassThru
-        Invoke-Expression "c:\opt\ffmpeg\bin\ffmpeg -y $Options" | Out-Default # wait for completion  
-        # Invoke-Expression "c:\opt\ffmpeg\bin\ffmpeg $Options"      
-    }
-}
-
-function Invoke-Imagick {
-    param (
-        [string]$Options
-    )
-    process {
-        # Start-Process -FilePath "c:\opt\imagick\magick" -ArgumentList "$Options" -NoNewWindow -Wait -PassThru
-        Invoke-Expression "c:\opt\imagick\magick $Options" | Out-Default # wait for completion    
-    }
-}
-
-function ProcessFile {
-    param (
-        [System.IO.FileInfo]$InputFile
-    )
-    process {
-        # $InputFile
-
-        $CoverFile = Rename-FileExtension -File $InputFile -NewExtension "jpg"
-        Invoke-Ffmpeg "-i `"$InputFile`" -c:v copy -an -loglevel quiet `"$CoverFile`""      
-    
-        if (Test-Path $CoverFile) {
-            Invoke-Imagick "mogrify -resize 400x400 -quality 80 -format jpg `"$CoverFile`""    
-
-            $TempFile = Rename-FileExtension -File $InputFile -Prefix "~"
-            Invoke-Ffmpeg "-i `"$InputFile`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -loglevel error `"$TempFile`""
-            # Invoke-Ffmpeg "-i `"$InputFile`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -disposition:v attached_pic `"$TempFile`"" #for m4a
-
-            Remove-Item -Path $CoverFile
-            Move-Item -Path $TempFile -Destination $InputFile -Force        
-        }
-    }
-}
-
-$ErrorActionPreference = "Break"
+# $ErrorActionPreference = "Break"
+$IncludeFiles = @("*.mp3")
+$FfmpegExe = "C:\Opt\ffmpeg\bin\ffmpeg.exe"
+$ImagicExe = "C:\Opt\imagick\magick.exe"
 # $PSStyle.Progress.View = 'Classic'
-# $Include = @("*.mp3", "*.m4a", "*.ogg") 
-# m4a does not copy all metadata tags
-$Include = @("*.mp3")
+# $IncludeFiles = @("*.mp3", "*.m4a", "*.ogg") # m4a does not copy all metadata tags
+
+Import-Module .\lib\util.psm1
 
 # --- SCRIPT ENTRY POINT ---
 
-Write-Progress -Activity "Processing" -Status "Collecting ..."
-$Items = Get-FilesCollection -Paths $args -Include $Include
+# Write-Progress -Activity "Collecting files" -Status "..." 
+Write-Host "Collecting files..." 
+$Items = Get-FilesCollection -Paths $args -Include $IncludeFiles
 
-$i = 1
-$n = $Items.Count
-$Items | ForEach-Object {
-    ProcessFile $_
-    Write-Progress -Activity "Processing" -Status "($i of $n) $_" -PercentComplete (($i / $n) * 100) -CurrentOperation $_    
-    $i++
+$SynchronizedData = [hashtable]::Synchronized(@{
+    i = 1
+    n = $Items.Count    
+})
+
+$Items | ForEach-Object -ThrottleLimit 8 -Parallel {
+    
+    Import-Module .\lib\util.psm1
+
+    $d = $using:SynchronizedData
+
+    $InputFile = $_
+    Write-Host "Processing: $InputFile"
+
+    $CoverFile = Rename-FileExtension -File $InputFile -NewExtension "jpg"
+    Invoke-Expression "$using:FfmpegExe -i `"$InputFile`" -c:v copy -an -loglevel quiet -y `"$CoverFile`""      
+        
+    if (Test-Path $CoverFile) {
+        Invoke-Expression "$using:ImagicExe mogrify -resize 400x400 -quality 80 -format jpg `"$CoverFile`""    
+    
+        $TempFile = Rename-FileExtension -File $InputFile -Prefix "~"
+        Invoke-Expression "$using:FfmpegExe -i `"$InputFile`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -loglevel error -y `"$TempFile`""
+        # Invoke-Ffmpeg "-i `"$InputFile`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -disposition:v attached_pic `"$TempFile`"" #for m4a
+    
+        Invoke-NotFail { Remove-Item -Path $CoverFile  -ErrorAction Stop }
+        Invoke-NotFail { Move-Item -Path $TempFile -Destination $InputFile -Force -ErrorAction Stop }        
+    }
+
+    Write-Progress -Activity "Processing" -Status "$($d.i) of $($d.n)) $_" -PercentComplete (($($d.i) / $($d.n)) * 100) -CurrentOperation $InputFile    
+
+    $d.i++
 }
+
+Write-Progress -Completed 
+Write-Host "Done." -ForegroundColor DarkGreen
