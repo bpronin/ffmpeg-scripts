@@ -22,28 +22,27 @@ $Items | ForEach-Object -ThrottleLimit 8 -Parallel {
     
     Import-Module .\lib\util.psm1
 
-    $d = $using:SynchronizedData
+    $Source = $_
+    $D = $using:SynchronizedData
+    # Write-Host "Processing: $Source"
 
-    $InputFile = $_
-    Write-Host "Processing: $InputFile"
-
-    $CoverFile = Rename-FileExtension -File $InputFile -NewExtension "jpg"
-    Invoke-Expression "$using:FfmpegExe -i `"$InputFile`" -c:v copy -an -loglevel quiet -y `"$CoverFile`""      
+    $CoverFile = Rename-FileExtension -File $Source -NewExtension "jpg"
+    Invoke-Expression "$using:FfmpegExe -i `"$Source`" -c:v copy -an -loglevel quiet -y `"$CoverFile`""      
         
     if (Test-Path $CoverFile) {
         Invoke-Expression "$using:ImagicExe mogrify -resize 400x400 -quality 80 -format jpg `"$CoverFile`""    
     
-        $TempFile = Rename-FileExtension -File $InputFile -Prefix "~"
-        Invoke-Expression "$using:FfmpegExe -i `"$InputFile`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -loglevel error -y `"$TempFile`""
-        # Invoke-Ffmpeg "-i `"$InputFile`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -disposition:v attached_pic `"$TempFile`"" #for m4a
+        $TempFile = Rename-FileExtension -File $Source -Prefix "~"
+        Invoke-Expression "$using:FfmpegExe -i `"$Source`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -loglevel error -y `"$TempFile`""
+        # Invoke-Ffmpeg "-i `"$Source`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -disposition:v attached_pic `"$TempFile`"" #for m4a
     
-        Invoke-NotFail { Remove-Item -Path $CoverFile  -ErrorAction Stop }
-        Invoke-NotFail { Move-Item -Path $TempFile -Destination $InputFile -Force -ErrorAction Stop }        
+        Invoke-FailSafe { Remove-Item -Path $CoverFile  -ErrorAction Stop }
+        Invoke-FailSafe { Move-Item -Path $TempFile -Destination $Source -Force -ErrorAction Stop } -Timeout 250       
     }
 
-    Write-Progress -Activity "Processing" -Status "$($d.i) of $($d.n)) $_" -PercentComplete (($($d.i) / $($d.n)) * 100) -CurrentOperation $InputFile    
+    Write-Progress -Activity "Processing" -Status "$($D.i) of $($D.n)) $_" -PercentComplete (($($D.i) / $($D.n)) * 100) -CurrentOperation $Source    
 
-    $d.i++
+    $D.i++
 }
 
 Write-Progress -Completed 
