@@ -210,7 +210,7 @@ function Convert-File {
     process {
         Write-Host "Source: $Source"
         
-        $Config = Rename-FileExtension -File $Source -NewExtension "txt"
+        $Config = Rename-FileExtension -File $Source -NewExtension ".txt"
         $TrackList = Read-TrackList $Config
 
         $TrackList | Format-Table

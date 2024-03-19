@@ -1,40 +1,43 @@
+$IncludeFiles = @("*.mp3", "*.m4a")
 # $ErrorActionPreference = "Break"
-$IncludeFiles = @("*.mp3")
-$FfmpegExe = "C:\Opt\ffmpeg\bin\ffmpeg.exe"
-$ImagicExe = "C:\Opt\imagick\magick.exe"
 # $PSStyle.Progress.View = 'Classic'
-# $IncludeFiles = @("*.mp3", "*.m4a", "*.ogg") # m4a does not copy all metadata tags
 
 Import-Module .\lib\util.psm1
 
 # --- SCRIPT ENTRY POINT ---
 
-# Write-Progress -Activity "Collecting files" -Status "..." 
-Write-Host "Collecting files..." 
+Write-Progress -Activity "Collecting files" -Status "..." 
+# Write-Host "Collecting files..." 
 $Items = Get-FilesCollection -Paths $args -Include $IncludeFiles
 
 $SynchronizedData = [hashtable]::Synchronized(@{
-    i = 1
-    n = $Items.Count    
-})
+        i = 1
+        n = $Items.Count    
+    })
 
 $Items | ForEach-Object -ThrottleLimit 8 -Parallel {
     
     Import-Module .\lib\util.psm1
+    Import-Module .\lib\ffmpeg.psm1
+    Import-Module .\lib\imagick.psm1
 
     $Source = $_
     $D = $using:SynchronizedData
     # Write-Host "Processing: $Source"
 
-    $CoverFile = Rename-FileExtension -File $Source -NewExtension "jpg"
-    Invoke-Expression "$using:FfmpegExe -i `"$Source`" -c:v copy -an -loglevel quiet -y `"$CoverFile`""      
+    $CoverFile = Rename-FileExtension -File $Source -NewExtension ".jpg"
+    Invoke-Ffmpeg "-i `"$Source`" -c:v copy -an -loglevel quiet -y `"$CoverFile`""      
         
     if (Test-Path $CoverFile) {
-        Invoke-Expression "$using:ImagicExe mogrify -resize 400x400 -quality 80 -format jpg `"$CoverFile`""    
+        Invoke-Imagick "mogrify -resize 400x400 -quality 80 -format jpg `"$CoverFile`""    
     
+        # $MetadataFile = Rename-FileExtension -File $Source -NewExtension ".metadata"
+        # Invoke-Ffmpeg "-i `"$Source`" -f ffmetadata `"$MetadataFile`" -loglevel error -y"
+
         $TempFile = Rename-FileExtension -File $Source -Prefix "~"
-        Invoke-Expression "$using:FfmpegExe -i `"$Source`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -loglevel error -y `"$TempFile`""
-        # Invoke-Ffmpeg "-i `"$Source`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -id3v2_version 3 -disposition:v attached_pic `"$TempFile`"" #for m4a
+        Invoke-Ffmpeg "-i `"$Source`" -i `"$CoverFile`" -c copy -map 0:a -map 1:v -disposition:v attached_pic -loglevel error -y `"$TempFile`""
+        # Invoke-Ffmpeg "-i `"$Source`" -i `"$CoverFile`" -f ffmetadata -i `"$MetadataFile`" -c copy -map 0:a -map 1:v -map_metadata 2 -id3v2_version 3 -disposition:v attached_pic -loglevel error -y `"$TempFile`""
+        # Invoke-Ffmpeg "-i `"$Source`" -f ffmetadata -i `"$MetadataFile`" -c copy -map 0:a -map_metadata 1 -loglevel error -y `"$TempFile`""
     
         Invoke-FailSafe { Remove-Item -Path $CoverFile  -ErrorAction Stop }
         Invoke-FailSafe { Move-Item -Path $TempFile -Destination $Source -Force -ErrorAction Stop } -Timeout 250       

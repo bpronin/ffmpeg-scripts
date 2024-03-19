@@ -15,7 +15,7 @@ function Rename-FileExtension {
         [String]$Prefix
     )
     process {
-        return Join-Path $File.Directory "$Prefix$( $File.BaseName ).$NewExtension"
+        return Join-Path $File.Directory "$Prefix$( $File.BaseName )$NewExtension"
     }
 }
 
