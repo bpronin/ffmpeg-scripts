@@ -21,13 +21,6 @@
             "args": ["-InputPath", "\"c:\\Temp\\book\""]
         },
         {
-            "name": "compress-cover-test",
-            "type": "PowerShell",
-            "request": "launch",
-            "script": ".\\compress-cover.ps1",
-            "cwd": "${cwd}",
-            "args": ["c:\\Temp\\test-convert"]
-        },        {
             "name": "compress-cover",
             "type": "PowerShell",
             "request": "launch",
@@ -41,7 +34,7 @@
             "request": "launch",
             "script": ".\\split.ps1",
             "cwd": "${cwd}",
-            "args": ["c:\\Temp\\test"]
+            "args": ["\"d:\\Temp\\Music\\~~~\\2023 - More Sounds Of The Department Store\\More Sounds Of The Department Store.m4a\""]
         },
         {
             "name": "split-mp4-chapters",

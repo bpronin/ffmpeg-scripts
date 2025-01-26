@@ -1,4 +1,6 @@
-﻿$ErrorActionPreference = "Break"
+﻿# $ErrorActionPreference = "Break"
+$ErrorActionPreference = "Inquire"
+
 $IncludeFiles = @("*.mkv", "*.mp4", "*.m4a", "*.webm", "*.ogg")
 $Formats = @{
     ".mkv"  = "m4a" 
@@ -7,9 +9,9 @@ $Formats = @{
     ".webm" = "ogg" 
     ".ogg"  = "ogg"
 }
-$FFmpeg = "C:\Opt\ffmpeg\bin\ffmpeg.exe"
 
 Import-Module .\lib\util.psm1
+Import-Module .\lib\ffmpeg.psm1
 
 class Track {
     [Int]$Index
@@ -55,6 +57,12 @@ function Get-TrackRegex {
             -replace "{start}|{time}", "(?<start>[\d:]+\.?\d+)"`
             -replace "{duration}", "(?<duration>[\d:]+\.?\d+)"`
             -replace "{index}|{track}", "(?<index>\d+)"`
+            -replace "{date}|{year}", "(?<date>\d+)"`
+            -replace "{performer}", "(?<performer>.+)"`
+            -replace "{composer}", "(?<composer>.+)"`
+            -replace "{genre}", "(?<genre>.+)"`
+            -replace "{album}", "(?<album>.+)"`
+            -replace "{}", "(.+)"`
             -replace "(\s+)", "\s+"  
     }
 }
@@ -100,7 +108,7 @@ function Read-Track {
             }
         }
         else {
-            throw "Invalid regex [$Regex] or track string [$String]"
+            throw "Read track $Index failed: regex [$Regex], string [$String]"
         }
     }
 }
@@ -109,12 +117,12 @@ function Read-TrackList {
         [System.IO.FileInfo] $ConfigPath
     )
     process {
+        Write-Host "Tracks: $ConfigPath"
         if (Test-Path $ConfigPath) {
-            Write-Host "Tracks: $ConfigPath"
             $Config = Get-Content $ConfigPath
         }
         else {            
-            throw "Tracks file [$ConfigPath] not found."
+            throw "Tracks file not found."
         }       
         
         $Format = Get-TrackRegex $Config[0]
@@ -145,7 +153,7 @@ function Get-OutputDir {
     }
 }
 
-function Invoke-Ffmpeg {
+function Invoke-Convert {
     param (
         [System.IO.FileInfo] $Source,
         [Track[]] $TrackList
@@ -156,7 +164,7 @@ function Invoke-Ffmpeg {
 
         $CoverFile = "$TargetPath\folder.jpg"
         Write-Host "Extracting cover art: $CoverFile"
-        Invoke-Expression "$FFmpeg -loglevel error -y -i `"$Source`" -c:v copy -an `"$CoverFile`""  
+        Invoke-Ffmpeg "-i `"$Source`" -c:v copy -an -loglevel error -y `"$CoverFile`""  
         
         $Tasks = @()
         for ($i = 0; $i -lt $TrackList.Count; $i++) {
@@ -168,37 +176,29 @@ function Invoke-Ffmpeg {
             
         $Tasks | ForEach-Object -Parallel {
             Import-Module .\lib\util.psm1
+            Import-Module .\lib\ffmpeg.psm1
+
             $Track = $_.Track
             $TargetFile = "{0:d2} - $( Get-NormalizedFilename $Track.Title ).$using:TargetExt" -f $Track.Index
             $Target = Join-Path $using:TargetPath $TargetFile
 
-            $Command = "$using:FFmpeg -loglevel error -y"
-            $Command += " -i `"$using:Source`"" 
+            $Command = "-i `"$using:Source`"" 
             $Command += " -ss $($Track.Start)"
-            
-            if ($_.NextTrack) {
-                $Command += " -to $( $_.NextTrack.Start )"
-            } 
-
+            $Command += $_.NextTrack ? " -to $( $_.NextTrack.Start )" : ""
             $Command += " -map_chapters -1"
             $Command += " -metadata track=`"$($Track.Index)`""
             $Command += " -metadata title=`"$($Track.Title)`""
-            $Command += " -metadata artist=`"$($Track.Artist)`""
-            $Command += " -metadata composer=`"$($Track.Composer)`""
-            $Command += " -metadata performer=`"$($Track.Performer)`""
-            $Command += " -metadata date=`"$($Track.Date)`""
-            $Command += " -metadata genre=`"$($Track.Genre)`""
-            $Command += " -metadata album=`"$($Track.Album)`""
-            $Command += " -metadata album_artist=`"$($Track.AlbumArtist)`""
-            $Command += " -metadata disc=`"$($Track.DiskNumber)`""
-            $Command += " -metadata totaldiscs=`"$($Track.TotalDisks)`""
-            $Command += " -metadata totalTracks=`"$($using:TrackList.Count)`""
+            $Command += $Track.Artist ? " -metadata artist=`"$($Track.Artist)`"" : ""
+            $Command += $Track.Composer ? " -metadata composer=`"$($Track.Composer)`"" : ""
+            $Command += $Track.Performer ? " -metadata performer=`"$($Track.Performer)`"" : ""
+            $Command += " -metadata totaltracks=`"$($using:TrackList.Count)`""
             $Command += " -vn -c:a copy"
+            $Command += " -loglevel error -y"
             $Command += " `"$Target`""
             
             Write-Host "Extracting: $Target"
             # $Command
-            Invoke-Expression $Command            
+            Invoke-Ffmpeg $Command            
         }
     }
 }
@@ -216,7 +216,7 @@ function Convert-File {
         $TrackList | Format-Table
 
         Confirm-ProceedOrExit "Proceed with these tracks?"
-        Invoke-Ffmpeg -Source $Source -TrackList $TrackList
+        Invoke-Convert -Source $Source -TrackList $TrackList
     }
 }
 

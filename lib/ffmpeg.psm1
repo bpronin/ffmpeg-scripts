@@ -24,7 +24,7 @@ function Format-Metadata
 {
     param (
         [Parameter(Mandatory = $true)]
-        [Hashtable]$data
+        $data
     )
     foreach ($k in $data.Keys)
     {
@@ -39,3 +39,4 @@ function Format-Metadata
 
 Export-ModuleMember -Function Invoke-Ffmpeg
 Export-ModuleMember -Function Invoke-Ffprobe
+Export-ModuleMember -Function Format-Metadata
