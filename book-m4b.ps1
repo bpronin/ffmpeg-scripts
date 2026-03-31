@@ -1,142 +1,146 @@
 param(
-    [Parameter(Position = 0, mandatory = $true)]
-    [System.IO.DirectoryInfo] $InputPath,
-    [System.IO.FileInfo] $FfmpegHome = "c:\opt\ffmpeg\bin"
+    # [Parameter(Position = 0, mandatory = $true)]
+    # [System.IO.DirectoryInfo] $InputPath = "C:\Temp\t",
+    # [System.IO.FileInfo] $FfmpegHome = "c:\opt\media\ffmpeg\bin"
 )
 
-$UtilsModule = ".\lib\util.psm1"
-Import-Module $UtilsModule
+$InputPath = "C:\Temp\t"
+$FfmpegHome = "c:\opt\media\ffmpeg\bin"
 
-function GetFileMetadata {
+$ffprobe = "$FfmpegHome\ffprobe"
+$ffmpeg = "$FfmpegHome\ffmpeg"
+
+function ReadFileMetadata {
     param (
         [System.IO.FileInfo] $InputFile
     )
-    
-    # "$FfmpegHome\ffprobe -i $InputFile -show_entries format=duration -sexagesimal -v quiet -of csv=`"p=0`"" | Invoke-Expression
-    
-    return Invoke-Expression "$FfmpegHome\ffprobe -v quiet -show_streams -show_entries stream_tags:format_tags -of json `"$InputFile`"" 
-    | ConvertFrom-Json    
+
+    return & $ffprobe -v quiet -show_streams -show_entries stream_tags:format_tags -of json $InputFile | ConvertFrom-Json    
 }
 
 function GetChapterTitle {
     param (
-        $Chapter
+        $Tags
     )
-    if ($Chapter.tags.title) {
-        return $Chapter.tags.title 
+
+    if ($Tags.title) {
+        return $Tags.title 
     }
     else {
-        $Index = ($Chapter.tags.track -split "/")[0]
-        return "Chapter $Index"
+        $index = ($Tags.track -split "/")[0]
+        return "Chapter $index"
     }    
 }
-function GetOutputFile {
+
+function GetOutputFileName {
     param (
-        $Chapter
+        $Tags,
+        [System.IO.FileInfo] $InputFile
     )
 
-    $Album = if ($Chapter.tags.album) {
-        $Chapter.tags.album
+    $album = if ($Tags.album) { 
+        $Tags.album 
     }
-    else {
-        "image"
-    }    
-
-    $Artist = if ($Chapter.tags.album_artist) {
-        $Chapter.tags.album_artist 
+    else { 
+        $InputFile.BaseName 
     }
-    else {
-        $Chapter.tags.artist
-    }       
 
-    return NormalizeFilename "$Artist - $Album"
+    $artist = if ($Tags.album_artist) { 
+        $Tags.album_artist 
+    }
+    else { 
+        $Tags.artist 
+    }
+
+    return "$artist - $album"
 }
 
-<############## Script entry point ################>
+function GetCoverFile {
+    param (
+        $InputFile
+    )
 
-$OutputPath = "$InputPath\~out"
-New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+    $coverFile = "$InputPath\cover.jpg"
+    if (-not (Test-Path -Path $coverFile -PathType Leaf)) {
+        $coverFile = "$outputPath\~cover.jpg"
+        & $ffmpeg -i $InputFile -c:v copy -an $coverFile -y -hide_banner -loglevel error
+    }
 
-# Convert audio
-
-Get-ChildItem -Path "$InputPath\*" -Include "*.mp3" | Foreach-Object -Parallel {
-    Write-Host "Converting $_."    
-    # Write-Progress -Activity "Converting" -Status "$_" -PercentComplete 0
-    
-    $OutputFile = "$using:OutputPath\$($_.BaseName).m4a"
-    # Invoke-Expression "$using:FfmpegHome\ffmpeg -i $_ -vn -c:a aac -b:a 64k -y -loglevel error $OutputFile"  
-    Invoke-Expression "$using:FfmpegHome\ffmpeg -i `"$_`" -c:v copy -c:a aac -b:a 64k -y -loglevel error `"$OutputFile`""  
+    return $coverFile
 }
 
-# Collect metadata
+############## Script entry point ################
 
-Write-Host "Redaing metadata."
+$outputPath = "$InputPath\~out"
+Remove-Item -Path $outputPath -Recurse -Confirm:$false -Force -ErrorAction SilentlyContinue
+New-Item -Path $outputPath -ItemType Directory -Force | Out-Null
 
-$Chapters = @()
-$ChapterStart = 0
-Get-ChildItem -Path "$OutputPath\*" -Include "*.m4a" | Sort-Object -Property Name | Foreach-Object {
-    $Metadata = GetFileMetadata -InputFile $_
-    $Stream = $Metadata.streams[0]
-    $ChapterEnd = $ChapterStart + $Stream.duration_ts    
+### Collecting metadata ###
 
-    $Chapters += @{
+$chapters = @()
+$start = 0
+Get-ChildItem -Path "$InputPath\*" -Include "*.mp3" | Sort-Object -Property Name | Foreach-Object {
+    $metadata = ReadFileMetadata -InputFile $_
+    $stream = $metadata.streams[0]
+    $end = $start + $stream.duration_ts    
+
+    $chapters += @{
         file      = $_
-        start     = $ChapterStart
-        end       = $ChapterEnd 
-        time_base = $Stream.time_base
-        tags      = $Metadata.format.tags
+        start     = $start
+        end       = $end 
+        time_base = $stream.time_base
+        tags      = $metadata.format.tags
     }
     
-    $ChapterStart = $ChapterEnd
+    $start = $end
 }
 
-$Metadata = @(
+$tags = $chapters[0].tags
+$metadata = @(
     ";FFMETADATA1"
-    "album=$($Chapters[0].tags.album)"
-    "genre=$($Chapters[0].tags.genre)"
-    "artist=$($Chapters[0].tags.artist)"
-    "date=$($Chapters[0].tags.date)"
-    "artist=$($Chapters[0].tags.artist)"
-    "album_artist=$($Chapters[0].tags.album_artist)"
-    "composer=$($Chapters[0].tags.composer)"
-    "comment=$($Chapters[0].tags.comment)"
+    "album=$($tags.album)"
+    "genre=$($tags.genre)"
+    "artist=$($tags.artist)"
+    "date=$($tags.date)"
+    "artist=$($tags.artist)"
+    "album_artist=$($tags.album_artist)"
+    "composer=$($tags.composer)"
+    "comment=$($tags.comment)"
+    "disc=$($tags.disc)"
+    # "GROUP=$($tags.GROUP)"
+    # "URL=$($tags.URL)"
 )
 
-$FileList = @()
+$files = @()
 
-$Chapters | Foreach-Object {
-    $Title = GetChapterTitle -Chapter $_
-    $FileList += "file '$($_.file)'"
- 
-    $Metadata += @(
+$chapters | Foreach-Object {
+    $title = GetChapterTitle -Tags $_.tags
+    $filename = $_.file.FullName.Replace("'", "'\''")
+    $files += "file '$filename'"
+
+    $metadata += @(
         "[CHAPTER]"
         "TIMEBASE=$($_.time_base)"
         "START=$($_.start)"
         "END=$($_.end)"
-        "title=$Title"    
+        "title=$title"    
     ) 
 }   
 
-$MetadataFile = "$OutputPath\~metadata.txt"
-Out-File -FilePath $MetadataFile -InputObject $Metadata
+$metadataFile = "$outputPath\~metadata.txt"
+Out-File -FilePath $metadataFile -InputObject $metadata -Encoding utf8NoBOM
 
-$FileListFile = "$OutputPath\~files.txt"
-Out-File -FilePath $FileListFile -InputObject $FileList
+$listFile = "$outputPath\~files.txt"
+Out-File -FilePath $listFile -InputObject $files -Encoding utf8NoBOM
 
-Write-Host "Extracting album art image."
-$CoverFile = "$OutputPath\~cover.jpeg"
-Invoke-Expression "$FfmpegHome\ffmpeg -i `"$($Chapters[0].file)`" -c:v copy -an -y -loglevel error `"$CoverFile`"" 
+$outputFilename = GetOutputFileName -Tags $tags -InputFile $InputPath.BaseName
+$outputFile = "$outputPath\$outputFilename.m4b"
+$coverFile = GetCoverFile -InputFile $chapters[0].file
 
-### Join files, chapters add metadata and cover image ###
+### Joining chapters ###
+& $ffmpeg -f concat -safe 0 -i $listFile -i $metadataFile -i $coverFile -map_metadata 1 -map 0:a -map 2:v -c copy `
+    -disposition:v:0 attached_pic $outputFile -y -hide_banner -loglevel error
 
-$OutputFile = "$OutputPath\$(GetOutputFile $Chapters[0]).m4b"
-Write-Host "Joining chapters into $OutputFile."
-# Invoke-Expression "$FfmpegHome\ffmpeg -hide_banner -f concat -safe 0 -i `"$FileListFile`" -i `"$CoverFile`" -i `"$MetadataFile`" -map 0 -map 1 -map_metadata 1 -c copy -vn -y `"$OutputFile`""
-Invoke-Expression "$FfmpegHome\ffmpeg -hide_banner -f concat -safe 0 -i `"$FileListFile`" -i `"$MetadataFile`" -map_metadata 1 -c copy -vn -y `"$OutputFile`""
+# & $ffprobe -i $outputFile -show_entries format_tags
 
-if ($Error) {
-    Read-Host 
-}
-else {
-    Write-Host "Done" -ForegroundColor DarkGreen
-}
+Write-Host "Done" -ForegroundColor DarkGreen

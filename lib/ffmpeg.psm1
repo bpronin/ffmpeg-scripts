@@ -1,36 +1,36 @@
 $FfmpegHome = "c:\opt\ffmpeg\bin"
 
-function Invoke-Ffmpeg
-{
+function Invoke-Ffmpeg {
     param (
-        $Arguments
+        [Switch] $Quiet,
+        [String] $Arguments
     )
-    process{
-        Invoke-Expression "$FfmpegHome\ffmpeg $Arguments"
+    process {
+        $expession = "$FfmpegHome\ffmpeg $Arguments"
+        if ($Quiet) {
+            $expession += " -loglevel quiet -y"
+        } 
+        Invoke-Expression $expession
     }
 }
 
-function Invoke-Ffprobe
-{
+function Invoke-Ffprobe {
     param (
-        $Arguments
+        [String] $Arguments
     )
-    process{
+    process {
         Invoke-Expression "$FfmpegHome\ffprobe $Arguments"
     }
 }
 
-function Format-Metadata
-{
+function Format-Metadata {
     param (
         [Parameter(Mandatory = $true)]
         $data
     )
-    foreach ($k in $data.Keys)
-    {
+    foreach ($k in $data.Keys) {
         $v = $data[$k]
-        if ($v)
-        {
+        if ($v) {
             $result += "-metadata $k=`"$v`" "
         }
     }

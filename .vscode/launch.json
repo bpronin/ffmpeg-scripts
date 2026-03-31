@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "extract cover",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": ".\\extract-cover.ps1",
+            "cwd": "${cwd}",
+            "args": ["c:\\Temp\\ttt"]
+        },
+        {
             "name": "crop",
             "type": "PowerShell",
             "request": "launch",
