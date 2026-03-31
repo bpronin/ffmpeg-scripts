@@ -4,7 +4,7 @@ param(
     # [System.IO.FileInfo] $FfmpegHome = "c:\opt\media\ffmpeg\bin"
 )
 
-$InputPath = "C:\Temp\t"
+[System.IO.DirectoryInfo] $InputPath = "C:\Temp\t"
 $FfmpegHome = "c:\opt\media\ffmpeg\bin"
 
 $ffprobe = "$FfmpegHome\ffprobe"
@@ -31,23 +31,24 @@ function GetChapterTitle {
         return "Chapter $index"
     }    
 }
-function PrepareOutputPath {
+
+function PrepareTempPath {
     param (
-        $InputPath
+        [System.IO.DirectoryInfo] $InputPath
     )
 
-    $outputPath = "$InputPath\~out"
-    Remove-Item -Path $outputPath -Recurse -Confirm:$false -Force -ErrorAction SilentlyContinue
-    New-Item -Path $outputPath -ItemType Directory -Force | Out-Null
+    $tempPath = "$InputPath\~out"
+    Remove-Item -Path $tempPath -Recurse -Confirm:$false -Force -ErrorAction SilentlyContinue
+    New-Item -Path $tempPath -ItemType Directory -Force | Out-Null
     
-    return $outputPath
+    return $tempPath
 }
 
 function GetOutputFile {
     param (
         $Tags,
-        $InputFile,
-        $OutputPath
+        [System.IO.FileInfo] $InputFile,
+        [System.IO.DirectoryInfo] $OutputPath
     )
 
     $album = if ($Tags.album) { 
@@ -68,33 +69,44 @@ function GetOutputFile {
     return "$OutputPath\$filename.m4b"
 }
 
-function GetCoverFile {
+function AttachCover {
     param (
-        $InputFile
+        [System.IO.FileInfo] $CoverSource,
+        [System.IO.FileInfo] $InputFile
     )
+    
+    ### Extract picture ###
+    $coverFile = Join-Path $InputFile.Directory "~cover.jpg"
+    & $ffmpeg -i $CoverSource -c:v copy -an $coverFile -y #-loglevel error 
 
-    $coverFile = "$InputPath\cover.jpg"
-    if (-not (Test-Path -Path $coverFile -PathType Leaf)) {
-        $coverFile = "$outputPath\~cover.jpg"
-        & $ffmpeg -i $InputFile -c:v copy -an $coverFile -y -hide_banner -loglevel error
+    if (Test-Path -Path $coverFile -PathType Leaf) {
+        $outputFile = $InputFile
+
+        $tempFile = Join-Path $InputFile.Directory "~temp$($InputFile.Extension)"
+        Rename-Item -Path $InputFile -NewName $tempFile
+
+        ### Attach picture ###
+        & $ffmpeg -i $tempFile -i $coverFile -map 0:a -map 1:v -c copy -disposition:v:0 attached_pic $outputFile -y # -loglevel error
+    
+        Remove-Item $tempFile, $coverFile
     }
-
-    return $coverFile
 }
+
 function ReadChapters {
     param (
-        $InputPath
+        [System.IO.DirectoryInfo] $InputPath
     )
+
     $chapters = @()
     $start = 0
-
-    Get-ChildItem -Path "$InputPath\*" -Include "*.m4a" | Sort-Object -Property Name | Foreach-Object {
-        $metadata = ReadFileMetadata -InputFile $_
+    $files = Get-ChildItem -Path "$InputPath\*" -Include "*.m4a" | Sort-Object -Property Name
+    foreach ($file in $files) {
+        $metadata = ReadFileMetadata -InputFile $file
         $stream = $metadata.streams[0]
         $end = $start + $stream.duration_ts    
 
         $chapters += @{
-            file      = $_
+            file      = $file
             start     = $start
             end       = $end 
             time_base = $stream.time_base
@@ -106,10 +118,11 @@ function ReadChapters {
 
     return $chapters
 }
-function PrepareSources {
+
+function JoinChapters {
     param (
         $Chapters,
-        $OutputPath
+        [System.IO.FileInfo] $OutputFile
     )
 
     $metadata = @(
@@ -139,28 +152,48 @@ function PrepareSources {
         ) 
     }   
     
-    $source = @{
-        metadata = "$OutputPath\~metadata.txt"
-        list     = "$OutputPath\~files.txt"
-        cover    = GetCoverFile -InputFile $Chapters[0].file
+    $metadataFile = Join-Path $OutputFile.Directory "~metadata.txt"
+    $listFile = Join-Path $OutputFile.Directory "~files.txt"
+       
+    Out-File -FilePath $metadataFile -InputObject $metadata -Encoding utf8NoBOM
+    Out-File -FilePath $listFile -InputObject $files -Encoding utf8NoBOM
+    
+    & $ffmpeg -f concat -safe 0 -i $listFile -i $metadataFile -map_metadata 1 -map 0:a -c copy $OutputFile -y # -loglevel error
+    
+    Remove-Item $metadataFile, $listFile
+}
+
+function ConvertInputFiles {
+    param (
+        [System.IO.DirectoryInfo] $InputPath,
+        [System.IO.DirectoryInfo] $OutputPath
+    )
+
+    $files = Get-ChildItem -Path "$InputPath\*" -Include "*.m4a"
+    foreach ($file in $files) {
+        Copy-Item -Path $file -Destination $OutputPath     
     }
     
-    Out-File -FilePath $source.metadata -InputObject $metadata -Encoding utf8NoBOM
-    Out-File -FilePath $source.list -InputObject $files -Encoding utf8NoBOM
-
-    return $source
+    $files = Get-ChildItem -Path "$InputPath\*" -Include "*.mp3"
+    foreach ($file in $files) {
+        $outputFile = Join-Path $OutputPath ($file.BaseName + ".m4a")
+        & $ffmpeg -i $file.FullName -c:a aac -q:a 2 $outputFile -y
+    }
+    
 }
 
 ############## Script entry point ################
 
-$outputPath = PrepareOutputPath -InputPath $InputPath
-$chapters = ReadChapters -InputPath $InputPath
-$source = PrepareSources -Chapters $chapters -OutputPath $outputPath
-$outputFile = GetOutputFile -Tags $chapters[0].tags -InputFile $InputPath.BaseName -OutputPath $outputPath
-
-& $ffmpeg -f concat -safe 0 -i $source.list -i $source.metadata -i $source.cover -map_metadata 1 -map 0:a -map 2:v -c copy `
-    -disposition:v:0 attached_pic $outputFile -y #-hide_banner -loglevel error
+$tempPath = PrepareTempPath -InputPath $InputPath
+ConvertInputFiles -InputPath $InputPath -OutputPath $tempPath
+$chapters = ReadChapters -InputPath $tempPath
+$outputFile = GetOutputFile -Tags $chapters[0].tags -InputFile $InputPath.BaseName -OutputPath $tempPath
+JoinChapters -Chapters $chapters -OutputFile $outputFile
+AttachCover -CoverSource $chapters[0].file -InputFile $outputFile 
 
 # & $ffprobe -i $outputFile -show_entries format_tags
-
+foreach ($chapter in $chapters) {
+    Remove-Item $chapter.file
+}
+    
 Write-Host "Done" -ForegroundColor DarkGreen
