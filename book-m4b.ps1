@@ -31,11 +31,23 @@ function GetChapterTitle {
         return "Chapter $index"
     }    
 }
+function PrepareOutputPath {
+    param (
+        $InputPath
+    )
 
-function GetOutputFileName {
+    $outputPath = "$InputPath\~out"
+    Remove-Item -Path $outputPath -Recurse -Confirm:$false -Force -ErrorAction SilentlyContinue
+    New-Item -Path $outputPath -ItemType Directory -Force | Out-Null
+    
+    return $outputPath
+}
+
+function GetOutputFile {
     param (
         $Tags,
-        [System.IO.FileInfo] $InputFile
+        $InputFile,
+        $OutputPath
     )
 
     $album = if ($Tags.album) { 
@@ -52,7 +64,8 @@ function GetOutputFileName {
         $Tags.artist 
     }
 
-    return "$artist - $album"
+    $filename = "$artist - $album"
+    return "$OutputPath\$filename.m4b"
 }
 
 function GetCoverFile {
@@ -68,78 +81,85 @@ function GetCoverFile {
 
     return $coverFile
 }
+function ReadChapters {
+    param (
+        $InputPath
+    )
+    $chapters = @()
+    $start = 0
+
+    Get-ChildItem -Path "$InputPath\*" -Include "*.m4a" | Sort-Object -Property Name | Foreach-Object {
+        $metadata = ReadFileMetadata -InputFile $_
+        $stream = $metadata.streams[0]
+        $end = $start + $stream.duration_ts    
+
+        $chapters += @{
+            file      = $_
+            start     = $start
+            end       = $end 
+            time_base = $stream.time_base
+            tags      = $metadata.format.tags
+        }
+    
+        $start = $end
+    }
+
+    return $chapters
+}
+function PrepareSources {
+    param (
+        $Chapters,
+        $OutputPath
+    )
+
+    $metadata = @(
+        ";FFMETADATA1"
+        "album=$($Chapters[0].tags.album)"
+        "genre=$($Chapters[0].tags.genre)"
+        "artist=$($Chapters[0].tags.artist)"
+        "date=$($Chapters[0].tags.date)"
+        "artist=$($Chapters[0].tags.artist)"
+        "album_artist=$($Chapters[0].tags.album_artist)"
+        "composer=$($Chapters[0].tags.composer)"
+        "comment=$($Chapters[0].tags.comment)"
+        "disc=$($Chapters[0].tags.disc)"
+    )
+
+    $files = @()
+
+    foreach ($chapter in $Chapters) {
+        $filename = $chapter.file.FullName.Replace("'", "'\''")
+        $files += "file '$filename'"
+        $metadata += @(
+            "[CHAPTER]"
+            "TIMEBASE=$($chapter.time_base)"
+            "START=$($chapter.start)"
+            "END=$($chapter.end)"
+            "title=$(GetChapterTitle -Tags $chapter.tags)"    
+        ) 
+    }   
+    
+    $source = @{
+        metadata = "$OutputPath\~metadata.txt"
+        list     = "$OutputPath\~files.txt"
+        cover    = GetCoverFile -InputFile $Chapters[0].file
+    }
+    
+    Out-File -FilePath $source.metadata -InputObject $metadata -Encoding utf8NoBOM
+    Out-File -FilePath $source.list -InputObject $files -Encoding utf8NoBOM
+
+    return $source
+}
 
 ############## Script entry point ################
 
-$outputPath = "$InputPath\~out"
-Remove-Item -Path $outputPath -Recurse -Confirm:$false -Force -ErrorAction SilentlyContinue
-New-Item -Path $outputPath -ItemType Directory -Force | Out-Null
+$outputPath = PrepareOutputPath -InputPath $InputPath
+$chapters = ReadChapters -InputPath $InputPath
+$source = PrepareSources -Chapters $chapters -OutputPath $outputPath
+$outputFile = GetOutputFile -Tags $chapters[0].tags -InputFile $InputPath.BaseName -OutputPath $outputPath
 
-### Collecting metadata ###
-
-$chapters = @()
-$start = 0
-Get-ChildItem -Path "$InputPath\*" -Include "*.mp3" | Sort-Object -Property Name | Foreach-Object {
-    $metadata = ReadFileMetadata -InputFile $_
-    $stream = $metadata.streams[0]
-    $end = $start + $stream.duration_ts    
-
-    $chapters += @{
-        file      = $_
-        start     = $start
-        end       = $end 
-        time_base = $stream.time_base
-        tags      = $metadata.format.tags
-    }
-    
-    $start = $end
-}
-
-$tags = $chapters[0].tags
-$metadata = @(
-    ";FFMETADATA1"
-    "album=$($tags.album)"
-    "genre=$($tags.genre)"
-    "artist=$($tags.artist)"
-    "date=$($tags.date)"
-    "artist=$($tags.artist)"
-    "album_artist=$($tags.album_artist)"
-    "composer=$($tags.composer)"
-    "comment=$($tags.comment)"
-    "disc=$($tags.disc)"
-    # "GROUP=$($tags.GROUP)"
-    # "URL=$($tags.URL)"
-)
-
-$files = @()
-
-$chapters | Foreach-Object {
-    $title = GetChapterTitle -Tags $_.tags
-    $filename = $_.file.FullName.Replace("'", "'\''")
-    $files += "file '$filename'"
-
-    $metadata += @(
-        "[CHAPTER]"
-        "TIMEBASE=$($_.time_base)"
-        "START=$($_.start)"
-        "END=$($_.end)"
-        "title=$title"    
-    ) 
-}   
-
-$metadataFile = "$outputPath\~metadata.txt"
-Out-File -FilePath $metadataFile -InputObject $metadata -Encoding utf8NoBOM
-
-$listFile = "$outputPath\~files.txt"
-Out-File -FilePath $listFile -InputObject $files -Encoding utf8NoBOM
-
-$outputFilename = GetOutputFileName -Tags $tags -InputFile $InputPath.BaseName
-$outputFile = "$outputPath\$outputFilename.m4b"
-$coverFile = GetCoverFile -InputFile $chapters[0].file
-
-### Joining chapters ###
-& $ffmpeg -f concat -safe 0 -i $listFile -i $metadataFile -i $coverFile -map_metadata 1 -map 0:a -map 2:v -c copy `
-    -disposition:v:0 attached_pic $outputFile -y -hide_banner -loglevel error
+& $ffmpeg -f concat -safe 0 -i $source.list -i $source.metadata -i $source.cover -map_metadata 1 -map 0:a -map 2:v -c copy `
+    -disposition:v:0 attached_pic $outputFile -y #-hide_banner -loglevel error
 
 # & $ffprobe -i $outputFile -show_entries format_tags
 
