@@ -1,25 +1,14 @@
 param(
     # [Parameter(Position = 0, mandatory = $true)]
     # [System.IO.DirectoryInfo] $InputPath = "C:\Temp\t",
-    # [System.IO.FileInfo] $FfmpegHome = "c:\opt\media\ffmpeg\bin"
 )
+
 $InputPath = "C:\Temp\~\temp"
-$FfmpegHome = "c:\opt\media\ffmpeg\bin"
+
 $ImagicHome = "C:\Opt\imagick"
-
-$ffprobe = Join-Path $FfmpegHome "ffprobe.exe"
-$ffmpeg = Join-Path $FfmpegHome "ffmpeg.exe"
 $imagick = Join-Path $ImagicHome "magick.exe"
-# $ff_loglevel = "error"
-$ff_loglevel = "warning"
 
-function ReadFileMetadata {
-    param (
-        [System.IO.FileInfo] $InputFile
-    )
-
-    return & $ffprobe -v quiet -show_streams -show_entries stream_tags:format_tags -of json $InputFile | ConvertFrom-Json    
-}
+Import-Module .\lib\ffmpeg-util.psm1
 
 function GetChapterTitle {
     param (
@@ -79,25 +68,14 @@ function AttachCover {
     )
     
     $coverFile = Join-Path $InputFile.Directory "~cover.jpg"
-
-    ### Extract picture ###
-    # & $ffmpeg -i $CoverSource -c:v copy -an $coverFile -y -loglevel $ff_loglevel 
-    & $ffmpeg -i $CoverSource -map 0:v -update 1 -c copy $coverFile -y -loglevel $ff_loglevel 
+    ExtractPicture -InputFile $CoverSource -OutputFile $coverFile
 
     if (Test-Path -Path $coverFile -PathType Leaf) {
-
-        ### Convert image ###
+        ### Fix image size ###
         & $imagick mogrify -resize 400x400 -quality 80 -format jpg $coverFile 
         
-        $outputFile = $InputFile
-
-        $tempFile = Join-Path $InputFile.Directory "~temp$($InputFile.Extension)"
-        Rename-Item -Path $InputFile -NewName $tempFile
-
-        ### Attach picture ###
-        & $ffmpeg -i $tempFile -i $coverFile -map 0:a -map 1:v -c copy -disposition:v:0 attached_pic $outputFile -y -loglevel $ff_loglevel
-        
-        Remove-Item $tempFile, $coverFile
+        AttachPicture -InputFile $InputFile -PictureFile $coverFile
+        Remove-Item $coverFile
     }
 }
 
@@ -161,13 +139,13 @@ function JoinChapters {
         ) 
     }   
     
-    $metadataFile = Join-Path $OutputFile.Directory "~metadata.txt"
     $listFile = Join-Path $OutputFile.Directory "~files.txt"
-       
-    Out-File -FilePath $metadataFile -InputObject $metadata -Encoding utf8NoBOM
     Out-File -FilePath $listFile -InputObject $files -Encoding utf8NoBOM
     
-    & $ffmpeg -f concat -safe 0 -i $listFile -i $metadataFile -map_metadata 1 -map 0:a -c copy $OutputFile -y -loglevel $ff_loglevel
+    $metadataFile = Join-Path $OutputFile.Directory "~metadata.txt"
+    Out-File -FilePath $metadataFile -InputObject $metadata -Encoding utf8NoBOM
+    
+    ConcatFiles -ListFile $listFile -MetadataFile $metadataFile -OutputFile $OutputFile
     
     Remove-Item $metadataFile, $listFile
 }
@@ -187,8 +165,8 @@ function ConvertFiles {
             }
             ".mp3" {  
                 $outputFile = Join-Path $using:OutputPath ($inputFile.BaseName + ".m4a")
-                & $using:ffmpeg -i $inputFile -map 0:a -map 0:v -c:a aac -q:a 2 -c:v copy -disposition:v:0 attached_pic $outputFile `
-                    -y -loglevel $using:ff_loglevel
+                Import-Module .\lib\ffmpeg-util.psm1
+                ConvertToAacVbr -InputFile $inputFile -OutputFile $outputFile
             }
             Default {
                 Write-Warning "Unsupported extension"

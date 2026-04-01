@@ -1,4 +1,4 @@
-$FfmpegHome = "c:\opt\ffmpeg\bin"
+$FfmpegHome = "c:\opt\media\ffmpeg\bin"
 
 function Invoke-Ffmpeg {
     param (
