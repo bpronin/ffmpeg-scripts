@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "book-m4b",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": ".\\book-m4b.ps1",
+            "cwd": "${cwd}",
+            "args": ["c:\\Temp\\~\\temp"]
+        },
+        {
             "name": "extract cover",
             "type": "PowerShell",
             "request": "launch",

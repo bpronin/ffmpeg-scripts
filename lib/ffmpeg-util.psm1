@@ -1,16 +1,21 @@
 $FfmpegHome = "c:\opt\media\ffmpeg\bin"
 $ffmpeg = Join-Path $FfmpegHome "ffmpeg.exe"
 $ffprobe = Join-Path $FfmpegHome "ffprobe.exe"
-# $ff_loglevel = "error"
+$ff_loglevel = "error"
 # $ff_loglevel = "info"
-$ff_loglevel = "warning"
+# $ff_loglevel = "warning"
 
 function ReadFileMetadata {
     param (
         [System.IO.FileInfo] $InputFile
     )
 
-    return & $ffprobe -v quiet -show_streams -show_entries stream_tags:format_tags -of json $InputFile | ConvertFrom-Json    
+    return & $ffprobe -v quiet `
+        -show_streams `
+        -show_entries stream_tags:format_tags `
+        -output_format json `
+        $InputFile `
+        | ConvertFrom-Json    
 }
 
 function ExtractPicture {
@@ -19,7 +24,13 @@ function ExtractPicture {
         [System.IO.FileInfo] $OutputFile
     )
     # & $ffmpeg -i $CoverSource -c:v copy -an $coverFile -y -loglevel $ff_loglevel 
-    & $ffmpeg -i $InputFile -map 0:v -update 1 -c copy $OutputFile -y -loglevel $ff_loglevel
+    & $ffmpeg -i $InputFile `
+        -map 0:v `
+        -update 1 `
+        -c copy `
+        $OutputFile `
+        -y `
+        -loglevel $ff_loglevel
 }
 
 function AttachPicture {
@@ -32,7 +43,15 @@ function AttachPicture {
     $tempFile = Join-Path $InputFile.Directory "~temp$($InputFile.Extension)"
     Rename-Item -Path $InputFile -NewName $tempFile
 
-    & $ffmpeg -i $tempFile -i $PictureFile -map 0:a -map 1:v -c copy -disposition:v:0 attached_pic $outputFile -y -loglevel $ff_loglevel
+    & $ffmpeg -i $tempFile `
+        -i $PictureFile `
+        -map 0:a `
+        -map 1:v `
+        -c copy `
+        -disposition:v:0 attached_pic `
+        $outputFile `
+        -y `
+        -loglevel $ff_loglevel
 
     Remove-Item $tempFile
 }
@@ -43,8 +62,16 @@ function ConvertToAacVbr {
         [System.IO.FileInfo] $OutputFile
     )
     
-    & $ffmpeg -i $InputFile -map 0:a -map ?0:v -c:a aac -q:a 2 -c:v copy -disposition:v:0 attached_pic $OutputFile `
-        -y -loglevel $ff_loglevel
+    & $ffmpeg -i $InputFile `
+        -map 0:a `
+        -map ?0:v `
+        -c:a aac `
+        -q:a 2 `
+        -c:v copy `
+        -disposition:v:0 attached_pic `
+        $OutputFile `
+        -y `
+        -loglevel $ff_loglevel
 }
 
 function ConcatFiles {
@@ -54,9 +81,17 @@ function ConcatFiles {
         [System.IO.FileInfo] $OutputFile
     )
     
-    & $ffmpeg -f concat -safe 0 -i $ListFile -i $MetadataFile -map_metadata 1 -map 0:a -c copy $OutputFile -y -loglevel $ff_loglevel
+    & $ffmpeg -f concat `
+        -safe 0 `
+        -i $ListFile `
+        -i $MetadataFile `
+        -map_metadata 1 `
+        -map 0:a `
+        -codec copy `
+        $OutputFile `
+        -y `
+        -loglevel $ff_loglevel
 }
-
 
 Export-ModuleMember -Function ReadFileMetadata 
 Export-ModuleMember -Function ConvertToAacVbr 

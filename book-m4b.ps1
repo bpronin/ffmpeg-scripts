@@ -1,12 +1,9 @@
 param(
-    # [Parameter(Position = 0, mandatory = $true)]
-    # [System.IO.DirectoryInfo] $InputPath = "C:\Temp\t",
+    [Parameter(Position = 0, mandatory = $true)]
+    [System.IO.DirectoryInfo] $InputPath
 )
 
-$InputPath = "C:\Temp\~\temp"
-
-$ImagicHome = "C:\Opt\imagick"
-$imagick = Join-Path $ImagicHome "magick.exe"
+$imagick = "C:\Opt\imagick\magick.exe"
 
 Import-Module .\lib\ffmpeg-util.psm1
 
@@ -24,16 +21,16 @@ function GetChapterTitle {
     }    
 }
 
-function PrepareTempPath {
+function PrepareSubPath {
     param (
-        [System.IO.DirectoryInfo] $InputPath
+        $SubPath
     )
 
-    $tempPath = "$InputPath\~tmp"
-    Remove-Item -Path $tempPath -Recurse -Confirm:$false -Force -ErrorAction SilentlyContinue
-    New-Item -Path $tempPath -ItemType Directory -Force | Out-Null
+    $path = Join-Path $InputPath $SubPath
+    Remove-Item -Path $path -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item -Path $path -ItemType Directory > Out-Null
     
-    return $tempPath
+    return $path
 }
 
 function GetOutputFile {
@@ -75,7 +72,6 @@ function AttachCover {
         & $imagick mogrify -resize 400x400 -quality 80 -format jpg $coverFile 
         
         AttachPicture -InputFile $InputFile -PictureFile $coverFile
-        Remove-Item $coverFile
     }
 }
 
@@ -114,17 +110,24 @@ function JoinChapters {
 
     $metadata = @(
         ";FFMETADATA1"
-        "album=$($Chapters[0].tags.album)"
-        "genre=$($Chapters[0].tags.genre)"
-        "artist=$($Chapters[0].tags.artist)"
-        "date=$($Chapters[0].tags.date)"
-        "artist=$($Chapters[0].tags.artist)"
-        "album_artist=$($Chapters[0].tags.album_artist)"
-        "composer=$($Chapters[0].tags.composer)"
-        "comment=$($Chapters[0].tags.comment)"
-        "disc=$($Chapters[0].tags.disc)"
+        # "album=$($Chapters[0].tags.album)"
+        # "genre=$($Chapters[0].tags.genre)"
+        # "artist=$($Chapters[0].tags.artist)"
+        # "date=$($Chapters[0].tags.date)"
+        # "artist=$($Chapters[0].tags.artist)"
+        # "album_artist=$($Chapters[0].tags.album_artist)"
+        # "composer=$($Chapters[0].tags.composer)"
+        # "comment=$($Chapters[0].tags.comment)"
+        # "disc=$($Chapters[0].tags.disc)"
     )
-
+    
+    # $tags = $Chapters[0].tags
+    # foreach ($prop in $tags.psobject.Properties) {
+    #     if ($prop.name -ne "track") {
+    #         $metadata += "$($prop.name)=$($prop.value)"
+    #     }
+    # }
+    
     $files = @()
 
     foreach ($chapter in $Chapters) {
@@ -135,7 +138,17 @@ function JoinChapters {
             "TIMEBASE=$($chapter.time_base)"
             "START=$($chapter.start)"
             "END=$($chapter.end)"
-            "title=$(GetChapterTitle -Tags $chapter.tags)"    
+            "title=$(GetChapterTitle -Tags $chapter.tags)" 
+            
+            # "album=$($chapter.tags.album)"
+            # "genre=$($chapter.tags.genre)"
+            # "artist=$($chapter.tags.artist)"
+            # "date=$($chapter.tags.date)"
+            # "artist=$($chapter.tags.artist)"
+            # "album_artist=$($chapter.tags.album_artist)"
+            # "composer=$($chapter.tags.composer)"
+            # "comment=$($chapter.tags.comment)"
+            # "disc=$($chapter.tags.disc)"   
         ) 
     }   
     
@@ -146,8 +159,6 @@ function JoinChapters {
     Out-File -FilePath $metadataFile -InputObject $metadata -Encoding utf8NoBOM
     
     ConcatFiles -ListFile $listFile -MetadataFile $metadataFile -OutputFile $OutputFile
-    
-    Remove-Item $metadataFile, $listFile
 }
 
 function ConvertFiles {
@@ -177,16 +188,20 @@ function ConvertFiles {
 
 ############## Script entry point ################
 
-$tempPath = PrepareTempPath -InputPath $InputPath
+Write-Host "Working..."
+
+$tempPath = PrepareSubPath -SubPath "~tmp"   
 ConvertFiles -InputPath $InputPath -OutputPath $tempPath
 $chapters = ReadChapters -InputPath $tempPath
 $outputFile = GetOutputFile -Tags $chapters[0].tags -InputFile $InputPath.BaseName -OutputPath $tempPath
 JoinChapters -Chapters $chapters -OutputFile $outputFile
 AttachCover -CoverSource $chapters[0].file -InputFile $outputFile 
 
-# & $ffprobe -i $outputFile -show_entries format_tags
-foreach ($chapter in $chapters) {
-    Remove-Item $chapter.file
-}
-    
+# & c:\opt\media\ffmpeg\bin\ffprobe -v quiet -show_chapters -print_format json $outputFile
+
+$outputPath = PrepareSubPath -SubPath "~out"
+Move-Item -Path $outputFile -Destination $outputPath
+
+Remove-Item -Path $tempPath -Recurse    
 Write-Host "Done" -ForegroundColor DarkGreen
+# pause
