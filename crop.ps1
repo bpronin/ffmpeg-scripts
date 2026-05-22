@@ -5,14 +5,12 @@ param(
 
 Import-Module .\lib\util.psm1
 
-$FFmpeg = "C:\Opt\ffmpeg\bin\ffmpeg.exe"
-$Start = Read-HostDefault -Prompt "Start" -DefaultValue "00:00:00"
-$Length = Read-HostDefault -Prompt "Length" -DefaultValue "01:00:00"
+$ffmpeg = "C:\Opt\media\ffmpeg\bin\ffmpeg.exe"
 
-$OutputFileName = Get-NormalizedFileName $InputFile.BaseName
-$OutputFile = Join-Path $InputFile.Directory "_$($OutputFileName).m4a"
+$start = Read-HostDefault -Prompt "Start" -DefaultValue "00:00:00"
+$length = Read-HostDefault -Prompt "Length" -DefaultValue "01:00:00"
+$outputFile = Join-Path $InputFile.Directory "_$($InputFile.Name)"
 
-$Command = "$FFmpeg -i `"$InputFile`" -ss $Start -t $Length -vn -c:a copy `"$OutputFile`""
+& $ffmpeg -i $InputFile -ss $start -t $length -c copy $outputFile
 
-# Write-Host $Command
-Invoke-Expression $Command
+Write-Host "Done." -ForegroundColor DarkGreen
