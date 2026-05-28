@@ -2,17 +2,6 @@ Import-Module .\lib\util.psm1
 
 $ffhome = "..\bin"
 
-function Get-Metadata($source)
-{
-    & $ffhome\ffprobe `
-        -i $source `
-        -show_entries format `
-        -show_chapters `
-        -of json `
-        -sexagesimal `
-        -loglevel error | Out-String | ConvertFrom-Json
-}
-
 function New-TargetDirectory($source)
 {
     $targetPath = Join-Path $source.DirectoryName "$( $source.BaseName )-converted"
@@ -27,37 +16,109 @@ function New-TargetDirectory($source)
     return $targetPath
 }
 
-function Split-Chapter($source, $chapter, $index, $targetPath)
+function Get-Metadata($source)
 {
-    $track = "{0:d2}" -f ($index + 1)
+    & $ffhome\ffprobe `
+        -i $source `
+        -show_entries format `
+        -show_chapters `
+        -of json `
+        -sexagesimal `
+        -loglevel error | Out-String | ConvertFrom-Json
+}
+
+function Get-CoverArt($source, $targetPath)
+{
+    $cover = Join-Path $targetPath "cover.jpg"
+
+    & $ffhome\ffmpeg `
+        -i $source `
+        -loglevel error `
+        -y `
+        -map 0:v:0? `
+        -c:v mjpeg `
+        -vf "scale=400:-1" `
+        -frames:v 1 `
+        $cover
+
+    return $cover
+}
+
+function Add-CoverArt($source, $cover)
+{
+    if (-not (Test-Path $cover))
+    {
+        return
+    }
+
+    $temp = "$source.tmp"
+    Move-Item $source $temp
+
+    try
+    {
+        & $ffhome\ffmpeg `
+            -loglevel error `
+            -y `
+            -i $temp `
+            -i $cover `
+            -map 0:a `
+            -map 1:v `
+            -c:a copy `
+            -c:v mjpeg `
+            -disposition:v attached_pic `
+            $source
+
+        if ($LASTEXITCODE -ne 0)
+        {
+            throw "ffmpeg failed"
+        }
+
+        Remove-Item $temp
+    }
+    catch
+    {
+        if (Test-Path $source)
+        {
+            Remove-Item $source -Force
+        }
+
+        Move-Item $temp $source
+
+        throw
+    }
+}
+
+function Split-Chapter($source, $chapter, $index, $targetPath, $cover)
+{
+    $track = $index + 1
 
     $title = $chapter.tags.title
     if ( [string]::IsNullOrWhiteSpace($title))
     {
         $title = "Chapter $track"
     }
+    $title = Remove-InvalidFileNameChars $title
 
-    $safeTitle = Remove-InvalidFileNameChars $title
+    $targetName = "{0:d2} - {1}{2}" -f $track, $title, $source.Extension
+    $target = Join-Path $targetPath $targetName
 
-    $fileName = "{0} - {1}{2}" -f $track, $safeTitle, $source.Extension
-    $target = Join-Path $targetPath $fileName
+    Write-Host "Processing $targetName" -ForegroundColor DarkGray
 
-    Write-Host "Processing $fileName" -ForegroundColor DarkGray
-
-    $args = @(
-        "-i", $source.FullName,
-        "-loglevel", "error",
-        "-ss", $chapter.start_time,
-        "-to", $chapter.end_time,
-        "-map_chapters", "-1",
-        "-metadata", "track=$track",
-        "-metadata", "title=$title",
-        "-c", "copy",
-        "-y",
+    & $ffhome\ffmpeg `
+        -loglevel error `
+        -y `
+        -i $source `
+        -ss $chapter.start_time `
+        -to $chapter.end_time `
+        -c:a copy `
+        -vn `
+        -map_metadata 0 `
+        -map_chapters -1 `
+        -metadata track=$track `
+        -metadata title=$title `
         $target
-    )
 
-    & "$ffhome\ffmpeg" @args
+    return $target
 }
 
 # --- MAIN ---
@@ -82,13 +143,21 @@ foreach ($source in $sources)
     }
 
     $targetPath = New-TargetDirectory $source
+    $cover = Get-CoverArt -source $source -targetPath $targetPath
 
     for ($i = 0; $i -lt $metadata.chapters.Count; $i++) {
-        Split-Chapter `
+        $chapterFile = Split-Chapter `
             -source $source `
             -chapter $metadata.chapters[$i] `
             -index $i `
             -targetPath $targetPath
+
+        Add-CoverArt -source $chapterFile -cover $cover
+    }
+
+    if (Test-Path $cover)
+    {
+        Remove-Item $cover -Force
     }
 }
 
