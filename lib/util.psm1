@@ -7,27 +7,6 @@ function Set-ConsoleEncoding {
     }
 }
 
-function Rename-FileExtension {
-    param (
-        [Parameter(Mandatory)]
-        [System.IO.FileInfo]$File,
-        [String]$NewExtension = $File.Extension,
-        [String]$Prefix
-    )
-    process {
-        return Join-Path $File.Directory "$Prefix$( $File.BaseName )$NewExtension"
-    }
-}
-
-function Get-NormalizedFilename {
-    param (
-        [String]$Filename
-    )
-    process {
-        return ((($Filename -replace "[\\/:|<>｜：]", "¦") -replace "[*]", "·") -replace "[?]", "$") -replace "[\`"]", "'"
-    }
-}
-
 function Confirm-Proceed {
     param (
         [String]$Prompt
@@ -112,12 +91,9 @@ function Invoke-FailSafe {
     }
 }
 
+Export-ModuleMember -Function Set-ConsoleEncoding
 Export-ModuleMember -Function Confirm-Proceed
 Export-ModuleMember -Function Confirm-ProceedOrExit
-Export-ModuleMember -Function Get-Capitalized
-Export-ModuleMember -Function Get-NormalizedFilename
+Export-ModuleMember -Function Read-HostDefault
 Export-ModuleMember -Function Get-FilesCollection
 Export-ModuleMember -Function Invoke-FailSafe
-Export-ModuleMember -Function Rename-FileExtension
-Export-ModuleMember -Function Read-HostDefault
-Export-ModuleMember -Function Set-ConsoleEncoding

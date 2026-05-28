@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "split-mp4-chapters",
+				"type": "PowerShell",
+				"request": "launch",
+				"script": "${workspaceFolder}/split-mp4-chapters.ps1",
+				"args": ["C:/Temp/~/test"],
+				"cwd": "${cwd}"
+			}
+
+		]
+	}
+}

@@ -1,15 +1,15 @@
 Import-Module .\lib\util.psm1
 
 $ErrorActionPreference = "Break"
-$FfmpegHome = "c:\opt\ffmpeg\bin"
+$FfmpegHome = "..\bin"
 $ProcessibleFiles = @("*.m4a")
 
-# --- SCRIPT ENTRY POINT ---
+# --- MAIN ---
 
 Get-FilesCollection -Paths $args -Include $ProcessibleFiles | ForEach-Object {
     $Source = $_ 
 
-    $Metadata = Invoke-Expression "$FfmpegHome\ffprobe -i `"$Source`" -show_entries format -show_chapters -of json -sexagesimal -loglevel error" 
+    $Metadata = Invoke-Expression "$FfmpegHome\ffprobe -i `"$Source`" -show_entries format -show_chapters -of json -sexagesimal -loglevel error"
     | Out-String | ConvertFrom-Json
 
     $TargetPath = "$($Source.Directory)\chapters" 
@@ -17,7 +17,7 @@ Get-FilesCollection -Paths $args -Include $ProcessibleFiles | ForEach-Object {
     
     $CoverFile = "$TargetPath\folder.jpg"
     Write-Host "Extracting cover art: $CoverFile"
-    Invoke-Expression "$FfmpegHome\ffmpeg -loglevel error -y -i `"$Source`" -c:v copy -an `"$CoverFile`""  
+    Invoke-Expression "$FfmpegHome\ffmpeg -loglevel error -y -i `"$Source`" -c:v copy -an `"$CoverFile`""
 
     $Metadata.chapters | ForEach-Object -Parallel {
         $Chapter = $_

@@ -5,12 +5,12 @@ param(
 
 Import-Module .\lib\util.psm1
 
-$ffmpeg = "C:\Opt\media\ffmpeg\bin\ffmpeg.exe"
+$ffmpeg = "..\bin\ffmpeg.exe"
 
 $start = Read-HostDefault -Prompt "Start" -DefaultValue "00:00:00"
 $length = Read-HostDefault -Prompt "Length" -DefaultValue "01:00:00"
-$outputFile = Join-Path $InputFile.Directory "_$($InputFile.Name)"
+$target = Join-Path $InputFile.Directory "_$($InputFile.Name)"
 
-& $ffmpeg -i $InputFile -ss $start -t $length -c copy $outputFile
+& $ffmpeg -i $InputFile -ss $start -t $length -c copy $target
 
-Write-Host "Done." -ForegroundColor DarkGreen
+Write-ScriptDone
