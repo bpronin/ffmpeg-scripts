@@ -91,9 +91,26 @@ function Invoke-FailSafe {
     }
 }
 
+function Remove-InvalidFileNameChars($name) {
+    $invalid = [IO.Path]::GetInvalidFileNameChars()
+    $result = $name
+
+    foreach ($c in $invalid) {
+        $result = $result.Replace($c, '_')
+    }
+
+    return $result
+}
+
+function Write-ScriptDone{
+    Write-Host "`nDone" -ForegroundColor DarkGreen
+}
+
 Export-ModuleMember -Function Set-ConsoleEncoding
 Export-ModuleMember -Function Confirm-Proceed
 Export-ModuleMember -Function Confirm-ProceedOrExit
 Export-ModuleMember -Function Read-HostDefault
 Export-ModuleMember -Function Get-FilesCollection
 Export-ModuleMember -Function Invoke-FailSafe
+Export-ModuleMember -Function Remove-InvalidFileNameChars
+Export-ModuleMember -Function Write-ScriptDone
