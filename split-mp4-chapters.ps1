@@ -98,6 +98,7 @@ function Split-Chapter($source, $chapter, $index, $targetPath, $cover)
         $title = "Chapter $track"
     }
     $title = Remove-InvalidFileNameChars $title
+    $titleParts = ($title -split '-').Trim()
 
     $targetName = "{0:d2} - {1}{2}" -f $track, $title, $source.Extension
     $target = Join-Path $targetPath $targetName
@@ -115,7 +116,8 @@ function Split-Chapter($source, $chapter, $index, $targetPath, $cover)
         -map_metadata 0 `
         -map_chapters -1 `
         -metadata track=$track `
-        -metadata title=$title `
+        -metadata title=$($titleParts[0]) `
+        -metadata artist=$($titleParts[1]) `
         $target
 
     return $target
