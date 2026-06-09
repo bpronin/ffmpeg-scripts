@@ -116,8 +116,8 @@ function Split-Chapter($source, $chapter, $index, $targetPath, $cover)
         -map_metadata 0 `
         -map_chapters -1 `
         -metadata track=$track `
-        -metadata title=$($titleParts[0]) `
         -metadata artist=$($titleParts[1]) `
+        -metadata title=$($titleParts[0]) `
         $target
 
     return $target
